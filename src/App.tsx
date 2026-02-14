@@ -11,6 +11,7 @@ import Pages from "./pages/Pages";
 import Profiles from "./pages/Profiles";
 import BmsPage from "./pages/Bms";
 import AdAccountsPage from "./pages/AdAccounts";
+import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const AppRoutes = () => (
     <Route path="/profiles" element={<ProtectedRoute><Profiles /></ProtectedRoute>} />
     <Route path="/bms" element={<ProtectedRoute><BmsPage /></ProtectedRoute>} />
     <Route path="/ad-accounts" element={<ProtectedRoute><AdAccountsPage /></ProtectedRoute>} />
+    <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

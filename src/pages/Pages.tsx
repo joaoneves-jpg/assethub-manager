@@ -11,12 +11,31 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Trash2, Edit, Filter } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, Search, Trash2, Edit, Filter, MoreVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CreatePageModal from "@/components/CreatePageModal";
+import EditPageModal from "@/components/EditPageModal";
 import BulkEditModal from "@/components/BulkEditModal";
 import TimelineDrawer from "@/components/TimelineDrawer";
+import PageDetailModal from "@/components/PageDetailModal";
 import { motion } from "framer-motion";
+import type { Page } from "@/hooks/useData";
 
 const statusMap: Record<string, { label: string; className: string }> = {
   disponivel: { label: "Disponível", className: "status-available" },
@@ -39,6 +58,9 @@ const Pages = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showCreate, setShowCreate] = useState(false);
   const [showBulkEdit, setShowBulkEdit] = useState(false);
+  const [editPage, setEditPage] = useState<Page | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
+  const [selectedPage, setSelectedPage] = useState<Page | null>(null);
   const [timelineEntity, setTimelineEntity] = useState<{ type: string; id: string; name: string } | null>(null);
 
   const filtered = useMemo(() => {
@@ -75,6 +97,19 @@ const Pages = () => {
       toast({ title: "Páginas excluídas com sucesso" });
     } catch {
       toast({ title: "Erro ao excluir", variant: "destructive" });
+    }
+  };
+
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+
+  const handleDeleteSingle = async () => {
+    if (!deleteConfirm) return;
+    try {
+      await deletePages.mutateAsync([deleteConfirm.id]);
+      setDeleteConfirm(null);
+      toast({ title: "Página excluída com sucesso" });
+    } catch {
+      toast({ title: "Erro ao excluir página", variant: "destructive" });
     }
   };
 
@@ -151,7 +186,7 @@ const Pages = () => {
             <Edit className="h-3.5 w-3.5 mr-1" />
             Editar
           </Button>
-          <Button size="sm" variant="destructive" onClick={handleDelete}>
+          <Button size="sm" variant="destructive" onClick={() => setBulkDeleteConfirm(true)}>
             <Trash2 className="h-3.5 w-3.5 mr-1" />
             Excluir
           </Button>
@@ -177,20 +212,22 @@ const Pages = () => {
               <TableHead>BM Matriz</TableHead>
               <TableHead>BM em Uso</TableHead>
               <TableHead>Conta</TableHead>
+              <TableHead>Perfil</TableHead>
               <TableHead>Gestor</TableHead>
               <TableHead>Data Uso</TableHead>
+              <TableHead className="w-10 text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
                   Nenhuma página encontrada
                 </TableCell>
               </TableRow>
@@ -201,7 +238,7 @@ const Pages = () => {
                   <TableRow
                     key={page.id}
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => setTimelineEntity({ type: "page", id: page.id, name: page.name })}
+                    onClick={() => setSelectedPage(page)}
                   >
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <Checkbox
@@ -209,7 +246,12 @@ const Pages = () => {
                         onCheckedChange={() => toggleSelect(page.id)}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{page.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex flex-col">
+                        <span>{page.name}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono">{page.fb_page_id || "Sem ID"}</span>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <span className={`status-dot ${st.className}`} />
@@ -225,9 +267,36 @@ const Pages = () => {
                     <TableCell className="text-sm text-muted-foreground">
                       {(page.current_ad_account as any)?.name || "—"}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">—</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {page.fb_profile?.name || "—"}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {(page.manager as any)?.name || "—"}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {page.usage_date || "—"}
+                    </TableCell>
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditPage(page)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => setDeleteConfirm({ id: page.id, name: page.name })}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );
@@ -244,6 +313,12 @@ const Pages = () => {
           onClose={() => { setShowBulkEdit(false); setSelected(new Set()); }}
         />
       )}
+      {selectedPage && (
+        <PageDetailModal
+          page={selectedPage}
+          onClose={() => setSelectedPage(null)}
+        />
+      )}
       {timelineEntity && (
         <TimelineDrawer
           entityType={timelineEntity.type}
@@ -252,6 +327,63 @@ const Pages = () => {
           onClose={() => setTimelineEntity(null)}
         />
       )}
+
+      {editPage && (
+        <EditPageModal
+          page={editPage}
+          onClose={() => setEditPage(null)}
+        />
+      )}
+
+      <AlertDialog
+        open={!!deleteConfirm}
+        onOpenChange={(open) => !open && setDeleteConfirm(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-gray-800">Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a página <strong>{deleteConfirm?.name}</strong>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSingle}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        open={bulkDeleteConfirm}
+        onOpenChange={setBulkDeleteConfirm}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-gray-800">Confirmar exclusão em massa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir as <strong>{selected.size}</strong> páginas selecionadas?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                handleDelete();
+                setBulkDeleteConfirm(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir todas
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

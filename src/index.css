@@ -7,7 +7,7 @@
 @layer base {
   :root {
     --background: 220 20% 97%;
-    --foreground: 220 30% 10%;
+    --foreground: 100 100% 100%;
 
     --card: 0 0% 100%;
     --card-foreground: 220 30% 10%;
@@ -115,30 +115,37 @@
   .status-dot {
     @apply h-2.5 w-2.5 rounded-full inline-block;
   }
+
   .status-available {
     background-color: hsl(var(--status-available));
     box-shadow: 0 0 6px hsl(var(--status-available) / 0.5);
   }
+
   .status-in-use {
     background-color: hsl(var(--status-in-use));
     box-shadow: 0 0 6px hsl(var(--status-in-use) / 0.5);
   }
+
   .status-down {
     background-color: hsl(var(--status-down));
     box-shadow: 0 0 6px hsl(var(--status-down) / 0.5);
   }
+
   .status-restricted {
     background-color: hsl(var(--status-restricted));
     box-shadow: 0 0 6px hsl(var(--status-restricted) / 0.5);
   }
+
   .status-active {
     background-color: hsl(var(--status-active));
     box-shadow: 0 0 6px hsl(var(--status-active) / 0.5);
   }
+
   .status-blocked {
     background-color: hsl(var(--status-blocked));
     box-shadow: 0 0 6px hsl(var(--status-blocked) / 0.5);
   }
+
   .status-analysis {
     background-color: hsl(var(--status-analysis));
     box-shadow: 0 0 6px hsl(var(--status-analysis) / 0.5);

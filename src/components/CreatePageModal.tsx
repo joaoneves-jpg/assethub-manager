@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useCreatePage, useBms } from "@/hooks/useData";
+import { motion } from "framer-motion";
+import { useCreatePage, useBms, useAdAccounts, useTeamMembers, useFbProfiles } from "@/hooks/useData";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -20,9 +21,27 @@ const CreatePageModal = ({ onClose }: Props) => {
 
   // Single
   const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
+  const [fbPageId, setFbPageId] = useState("");
   const [originBm, setOriginBm] = useState("");
   const [status, setStatus] = useState("disponivel");
+
+  // Condicionais para "Em Uso"
+  const [currentAdAccount, setCurrentAdAccount] = useState("");
+  const [currentBm, setCurrentBm] = useState("");
+  const [currentManager, setCurrentManager] = useState("");
+  const [currentFbProfile, setCurrentFbProfile] = useState("");
+  const [usageDate, setUsageDate] = useState("");
+
+  const { data: accounts } = useAdAccounts();
+  const { data: members } = useTeamMembers();
+  const { data: fbProfiles } = useFbProfiles();
+
+  // Set default usage date when status becomes "em_uso"
+  useState(() => {
+    if (status === "em_uso" && !usageDate) {
+      setUsageDate(new Date().toISOString().split("T")[0]);
+    }
+  });
 
   // Bulk
   const [bulkText, setBulkText] = useState("");
@@ -32,10 +51,15 @@ const CreatePageModal = ({ onClose }: Props) => {
     try {
       await createPage.mutateAsync([{
         name,
-        url: url || undefined,
-        origin_bm_id: originBm || undefined,
+        fb_page_id: fbPageId,
+        origin_bm_id: originBm,
         status,
-      }]);
+        current_ad_account_id: status === "em_uso" ? currentAdAccount || null : null,
+        current_bm_id: status === "em_uso" ? currentBm || null : null,
+        current_manager_id: status === "em_uso" ? currentManager || null : null,
+        current_fb_profile_id: status === "em_uso" ? currentFbProfile || null : null,
+        usage_date: status === "em_uso" ? usageDate || null : null,
+      } as any]);
       toast({ title: "Página criada!" });
       onClose();
     } catch {
@@ -63,7 +87,7 @@ const CreatePageModal = ({ onClose }: Props) => {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg text-gray-800">
         <DialogHeader>
           <DialogTitle>Nova Página</DialogTitle>
         </DialogHeader>
@@ -73,17 +97,17 @@ const CreatePageModal = ({ onClose }: Props) => {
             <TabsTrigger value="bulk" className="flex-1">Em Massa</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="single" className="space-y-4 mt-4">
+          <TabsContent value="single" className="space-y-4 mt-4 max-h-[60vh] overflow-y-auto pr-2">
             <div className="space-y-2">
-              <Label>Nome da Página</Label>
+              <Label>Nome da Página <span className="text-destructive">*</span></Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Página Alpha 01" />
             </div>
             <div className="space-y-2">
-              <Label>URL (opcional)</Label>
-              <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." />
+              <Label>ID da Página <span className="text-destructive">*</span></Label>
+              <Input value={fbPageId} onChange={(e) => setFbPageId(e.target.value)} placeholder="Ex: 1029384756" />
             </div>
             <div className="space-y-2">
-              <Label>BM Matriz</Label>
+              <Label>BM Matriz <span className="text-destructive">*</span></Label>
               <Select value={originBm} onValueChange={setOriginBm}>
                 <SelectTrigger><SelectValue placeholder="Selecionar BM" /></SelectTrigger>
                 <SelectContent>
@@ -94,8 +118,13 @@ const CreatePageModal = ({ onClose }: Props) => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={setStatus}>
+              <Label>Status <span className="text-destructive">*</span></Label>
+              <Select value={status} onValueChange={(v) => {
+                setStatus(v);
+                if (v === "em_uso" && !usageDate) {
+                  setUsageDate(new Date().toISOString().split("T")[0]);
+                }
+              }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="disponivel">Disponível</SelectItem>
@@ -105,7 +134,61 @@ const CreatePageModal = ({ onClose }: Props) => {
                 </SelectContent>
               </Select>
             </div>
-            <Button className="w-full" onClick={handleSingle} disabled={!name || createPage.isPending}>
+
+            {status === "em_uso" && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-4 pt-2 border-t mt-4">
+                <div className="space-y-2">
+                  <Label>Conta de Anúncio</Label>
+                  <Select value={currentAdAccount} onValueChange={setCurrentAdAccount}>
+                    <SelectTrigger><SelectValue placeholder="Selecionar conta" /></SelectTrigger>
+                    <SelectContent>
+                      {accounts?.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>BM em uso</Label>
+                  <Select value={currentBm} onValueChange={setCurrentBm}>
+                    <SelectTrigger><SelectValue placeholder="Selecionar BM" /></SelectTrigger>
+                    <SelectContent>
+                      {bms?.map((bm) => (
+                        <SelectItem key={bm.id} value={bm.id}>{bm.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Gestor</Label>
+                  <Select value={currentManager} onValueChange={setCurrentManager}>
+                    <SelectTrigger><SelectValue placeholder="Selecionar gestor" /></SelectTrigger>
+                    <SelectContent>
+                      {members?.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Perfil</Label>
+                  <Select value={currentFbProfile} onValueChange={setCurrentFbProfile}>
+                    <SelectTrigger><SelectValue placeholder="Selecionar perfil" /></SelectTrigger>
+                    <SelectContent>
+                      {fbProfiles?.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Data de Uso</Label>
+                  <Input type="date" value={usageDate} onChange={(e) => setUsageDate(e.target.value)} />
+                </div>
+              </motion.div>
+            )}
+
+            <Button className="w-full mt-4" onClick={handleSingle} disabled={!name || !fbPageId || !originBm || createPage.isPending}>
               {createPage.isPending ? "Criando..." : "Criar Página"}
             </Button>
           </TabsContent>

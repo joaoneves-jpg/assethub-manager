@@ -1,16 +1,18 @@
-import { useState } from "react";
-import { useFbProfiles, useCreateFbProfile } from "@/hooks/useData";
+import { useState, useEffect } from "react";
+import { useFbProfiles, useCreateFbProfile, useBms } from "@/hooks/useData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, User } from "lucide-react";
+import { Plus, Search, User, Edit2, Building2, Trash2, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import TimelineDrawer from "@/components/TimelineDrawer";
 import { differenceInDays } from "date-fns";
 import { motion } from "framer-motion";
+import EditFbProfileModal from "@/components/EditFbProfileModal";
+import ProfileDetailModal from "@/components/ProfileDetailModal";
+import type { FbProfile } from "@/hooks/useData";
 
 const statusConfig: Record<string, { label: string; dotClass: string }> = {
   ativo: { label: "Ativo", dotClass: "status-active" },
@@ -21,20 +23,29 @@ const statusConfig: Record<string, { label: string; dotClass: string }> = {
 const Profiles = () => {
   const { data: profiles, isLoading } = useFbProfiles();
   const createProfile = useCreateFbProfile();
+  const { data: bms } = useBms();
   const { toast } = useToast();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showCreate, setShowCreate] = useState(false);
-  const [timeline, setTimeline] = useState<{ id: string; name: string } | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<FbProfile | null>(null);
+  const [editingProfile, setEditingProfile] = useState<FbProfile | null>(null);
 
   // Create form
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newLink, setNewLink] = useState("");
   const [newStatus, setNewStatus] = useState<string>("analise");
-  const [newRole, setNewRole] = useState<string>("anunciante");
   const [newDateReceived, setNewDateReceived] = useState("");
+  const [newDateBlocked, setNewDateBlocked] = useState("");
+  const [bmLinks, setBmLinks] = useState<{ bm_id: string; role_in_bm: string }[]>([]);
+
+  useEffect(() => {
+    if (newStatus === "bloqueado" && !newDateBlocked) {
+      setNewDateBlocked(new Date().toISOString().split("T")[0]);
+    }
+  }, [newStatus]);
 
   const filtered = profiles?.filter((p) => {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
@@ -44,21 +55,52 @@ const Profiles = () => {
 
   const handleCreate = async () => {
     try {
+      if (bmLinks.some(l => !l.bm_id)) {
+        toast({ title: "Selecione a BM em todos os vínculos", variant: "destructive" });
+        return;
+      }
+
       await createProfile.mutateAsync({
-        name: newName,
-        email_login: newEmail || null,
-        profile_link: newLink || null,
-        status: newStatus as any,
-        role_in_bm: newRole as any,
-        date_received: newDateReceived || null,
-        date_blocked: null,
+        profile: {
+          name: newName,
+          email_login: newEmail || null,
+          profile_link: newLink || null,
+          status: newStatus as any,
+          date_received: newDateReceived || null,
+          date_blocked: newStatus === "bloqueado" ? newDateBlocked || null : null,
+        },
+        bmLinks: bmLinks.length > 0 ? bmLinks : undefined,
       });
       toast({ title: "Perfil criado!" });
       setShowCreate(false);
-      setNewName(""); setNewEmail(""); setNewLink(""); setNewDateReceived("");
+      resetForm();
     } catch {
       toast({ title: "Erro ao criar perfil", variant: "destructive" });
     }
+  };
+
+  const resetForm = () => {
+    setNewName("");
+    setNewEmail("");
+    setNewLink("");
+    setNewStatus("analise");
+    setNewDateReceived("");
+    setNewDateBlocked("");
+    setBmLinks([]);
+  };
+
+  const addBmLink = () => {
+    setBmLinks([...bmLinks, { bm_id: "", role_in_bm: "anunciante" }]);
+  };
+
+  const removeBmLink = (index: number) => {
+    setBmLinks(bmLinks.filter((_, i) => i !== index));
+  };
+
+  const updateBmLink = (index: number, field: "bm_id" | "role_in_bm", value: string) => {
+    const next = [...bmLinks];
+    next[index] = { ...next[index], [field]: value };
+    setBmLinks(next);
   };
 
   return (
@@ -111,28 +153,43 @@ const Profiles = () => {
                 transition={{ delay: i * 0.05 }}
               >
                 <Card
-                  className="cursor-pointer hover:ring-1 hover:ring-primary/30 transition-all"
-                  onClick={() => setTimeline({ id: profile.id, name: profile.name })}
+                  className="cursor-pointer group hover:ring-1 hover:ring-primary/30 transition-all shadow-sm hover:shadow-md"
+                  onClick={() => setSelectedProfile(profile)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                          <User className="h-5 w-5 text-muted-foreground" />
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                          <User className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <p className="font-semibold text-sm">{profile.name}</p>
-                          <p className="text-xs text-muted-foreground">{profile.email_login || "—"}</p>
+                          <p className="font-semibold text-sm leading-tight">{profile.name}</p>
+                          <p className="text-xs text-muted-foreground truncate max-w-[140px]">{profile.email_login || "—"}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`status-dot ${cfg.dotClass}`} />
-                        <span className="text-xs text-muted-foreground">{cfg.label}</span>
+                      <div className="flex flex-col items-end gap-2">
+                        <div
+                          className="p-1 hover:bg-muted rounded-md transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingProfile(profile);
+                          }}
+                        >
+                          <Edit2 className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-muted/40 px-2 py-0.5 rounded-full">
+                          <span className={`status-dot ${cfg.dotClass}`} />
+                          <span className="text-[10px] font-medium text-muted-foreground uppercase">{cfg.label}</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{profile.role_in_bm === "administrador" ? "Admin" : "Anunciante"}</span>
-                      {daysActive !== null && <span>{daysActive} dias ativo</span>}
+                    <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-muted/50">
+                      {daysActive !== null && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span>{daysActive} dias</span>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -143,8 +200,8 @@ const Profiles = () => {
       )}
 
       {/* Create modal */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={showCreate} onOpenChange={(v) => { setShowCreate(v); if (!v) resetForm(); }}>
+        <DialogContent className="sm:max-w-md text-gray-800 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Novo Perfil</DialogTitle>
           </DialogHeader>
@@ -161,9 +218,9 @@ const Profiles = () => {
               <Label>Link do Perfil</Label>
               <Input value={newLink} onChange={(e) => setNewLink(e.target.value)} placeholder="https://facebook.com/..." />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <div className="space-y-2">
-                <Label>Status</Label>
+                <Label>Status Geral</Label>
                 <Select value={newStatus} onValueChange={setNewStatus}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -173,21 +230,56 @@ const Profiles = () => {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Cargo na BM</Label>
-                <Select value={newRole} onValueChange={setNewRole}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="administrador">Administrador</SelectItem>
-                    <SelectItem value="anunciante">Anunciante</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Data de Recebimento</Label>
+                <Input type="date" value={newDateReceived} onChange={(e) => setNewDateReceived(e.target.value)} />
               </div>
+              {newStatus === "bloqueado" && (
+                <div className="space-y-2">
+                  <Label>Data de Bloqueio</Label>
+                  <Input type="date" value={newDateBlocked} onChange={(e) => setNewDateBlocked(e.target.value)} />
+                </div>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label>Data de Recebimento</Label>
-              <Input type="date" value={newDateReceived} onChange={(e) => setNewDateReceived(e.target.value)} />
+
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Vínculo com BMs (opcional)</Label>
+                <Button type="button" variant="ghost" size="sm" className="h-8 text-primary" onClick={addBmLink}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add BM
+                </Button>
+              </div>
+
+              {bmLinks.map((link, index) => (
+                <div key={index} className="flex gap-2 items-end bg-gray-50 p-2 rounded-md border text-xs">
+                  <div className="flex-1 space-y-1">
+                    <Select value={link.bm_id} onValueChange={(v) => updateBmLink(index, "bm_id", v)}>
+                      <SelectTrigger className="h-8 py-0"><SelectValue placeholder="BM..." /></SelectTrigger>
+                      <SelectContent>
+                        {bms?.map((bm: any) => (
+                          <SelectItem key={bm.id} value={bm.id}>{bm.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-24 space-y-1">
+                    <Select value={link.role_in_bm} onValueChange={(v) => updateBmLink(index, "role_in_bm", v)}>
+                      <SelectTrigger className="h-8 py-0"><SelectValue placeholder="Cargo..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="administrador">Admin</SelectItem>
+                        <SelectItem value="anunciante">Anunciante</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeBmLink(index)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))}
             </div>
+
             <Button className="w-full" onClick={handleCreate} disabled={!newName || createProfile.isPending}>
               {createProfile.isPending ? "Criando..." : "Criar Perfil"}
             </Button>
@@ -195,12 +287,17 @@ const Profiles = () => {
         </DialogContent>
       </Dialog>
 
-      {timeline && (
-        <TimelineDrawer
-          entityType="profile"
-          entityId={timeline.id}
-          entityName={timeline.name}
-          onClose={() => setTimeline(null)}
+      {selectedProfile && (
+        <ProfileDetailModal
+          profile={selectedProfile}
+          onClose={() => setSelectedProfile(null)}
+        />
+      )}
+
+      {editingProfile && (
+        <EditFbProfileModal
+          profile={editingProfile}
+          onClose={() => setEditingProfile(null)}
         />
       )}
     </div>

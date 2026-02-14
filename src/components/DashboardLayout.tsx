@@ -57,7 +57,15 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
         </nav>
 
         <div className="p-3 border-t border-sidebar-border">
-          <div className="flex items-center gap-2.5 px-3 py-2 mb-1">
+          <Link
+            to="/profile"
+            className={cn(
+              "flex items-center gap-2.5 px-3 py-2 mb-1 rounded-md transition-colors",
+              pathname === "/profile"
+                ? "bg-sidebar-accent"
+                : "hover:bg-sidebar-accent/50"
+            )}
+          >
             <div className="h-7 w-7 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold text-sidebar-accent-foreground">
               {user?.name?.charAt(0)?.toUpperCase() || "U"}
             </div>
@@ -69,7 +77,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
                 {user?.role || "sem cargo"}
               </p>
             </div>
-          </div>
+          </Link>
           <button
             onClick={signOut}
             className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors w-full"
