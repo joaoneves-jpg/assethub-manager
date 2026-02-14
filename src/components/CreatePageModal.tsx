@@ -107,7 +107,7 @@ const CreatePageModal = ({ onClose }: Props) => {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl text-gray-800 max-h-[90vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
             <Layout className="h-5 w-5 text-primary" />
@@ -119,7 +119,7 @@ const CreatePageModal = ({ onClose }: Props) => {
           <div className="space-y-6">
             {/* Input Section */}
             <div className="space-y-3">
-              <Label className="text-sm font-semibold flex items-center gap-2 text-gray-700">
+              <Label className="text-sm font-semibold flex items-center gap-2">
                 <Plus className="h-4 w-4" />
                 Adicionar Páginas
               </Label>
@@ -156,7 +156,7 @@ const CreatePageModal = ({ onClose }: Props) => {
             {/* List Section */}
             {stagedPages.length > 0 && (
               <div className="space-y-3">
-                <Label className="text-sm font-semibold text-gray-700 flex justify-between items-center">
+                <Label className="text-sm font-semibold flex justify-between items-center">
                   <span>Páginas para criar ({stagedPages.length})</span>
                   <Button variant="ghost" size="sm" onClick={() => setStagedPages([])} className="text-xs text-destructive hover:text-destructive hover:bg-red-50 h-7">
                     Limpar Tudo
@@ -170,7 +170,7 @@ const CreatePageModal = ({ onClose }: Props) => {
                           key={page.id}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
-                          className="flex items-center justify-between p-3 bg-white"
+                          className="flex items-center justify-between p-3 bg-card"
                         >
                           <div className="flex flex-col">
                             <span className="text-sm font-medium">{page.name}</span>
@@ -227,7 +227,7 @@ const CreatePageModal = ({ onClose }: Props) => {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-blue-50/30 border border-blue-100"
+                  className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-primary/5 border border-primary/10"
                 >
                   <div className="space-y-2">
                     <Label className="text-xs">Conta de Anúncio</Label>
@@ -283,7 +283,7 @@ const CreatePageModal = ({ onClose }: Props) => {
           </div>
         </ScrollArea>
 
-        <div className="p-6 border-t bg-gray-50/50 flex gap-3">
+        <div className="p-6 border-t bg-muted/30 flex gap-3">
           <Button variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button
             className="flex-1"

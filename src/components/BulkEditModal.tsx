@@ -48,13 +48,13 @@ const BulkEditModal = ({ selectedIds, onClose }: Props) => {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-gray-800">Editar {selectedIds.length} páginas</DialogTitle>
+          <DialogTitle>Editar {selectedIds.length} páginas</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <p className="text-sm text-muted-foreground">
             Apenas os campos preenchidos serão alterados.
           </p>
-          <div className="space-y-2 text-gray-800">
+          <div className="space-y-2">
             <Label>Status</Label>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger><SelectValue placeholder="Manter atual" /></SelectTrigger>
@@ -66,7 +66,7 @@ const BulkEditModal = ({ selectedIds, onClose }: Props) => {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2 text-gray-800">
+          <div className="space-y-2">
             <Label>BM em Uso</Label>
             <Select value={currentBm} onValueChange={setCurrentBm}>
               <SelectTrigger><SelectValue placeholder="Manter atual" /></SelectTrigger>
@@ -77,7 +77,7 @@ const BulkEditModal = ({ selectedIds, onClose }: Props) => {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2 text-gray-800">
+          <div className="space-y-2">
             <Label>Conta de Anúncio</Label>
             <Select value={adAccount} onValueChange={setAdAccount}>
               <SelectTrigger><SelectValue placeholder="Manter atual" /></SelectTrigger>
@@ -88,7 +88,7 @@ const BulkEditModal = ({ selectedIds, onClose }: Props) => {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2 text-gray-800">
+          <div className="space-y-2">
             <Label>Gestor</Label>
             <Select value={manager} onValueChange={setManager}>
               <SelectTrigger><SelectValue placeholder="Manter atual" /></SelectTrigger>
@@ -99,7 +99,7 @@ const BulkEditModal = ({ selectedIds, onClose }: Props) => {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2 text-gray-800">
+          <div className="space-y-2">
             <Label>Data de Uso</Label>
             <Input type="date" value={usageDate} onChange={(e) => setUsageDate(e.target.value)} />
           </div>

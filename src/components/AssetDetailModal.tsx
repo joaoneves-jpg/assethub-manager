@@ -71,7 +71,7 @@ const formatLogChanges = (changes: any, actionType: string): React.ReactNode => 
             <div className="mt-1.5 space-y-0.5">
                 {relevantChanges.map(([key, value]) => (
                     <div key={key} className="text-[11px] text-muted-foreground">
-                        <span className="font-medium text-gray-600">{fieldLabels[key] || key}:</span>{" "}
+                        <span className="font-medium text-foreground/70">{fieldLabels[key] || key}:</span>{" "}
                         <span>{formatValue(value)}</span>
                     </div>
                 ))}
@@ -90,15 +90,15 @@ const formatLogChanges = (changes: any, actionType: string): React.ReactNode => 
             <div className="mt-2 space-y-2">
                 {updates.map(([key, change]: [string, any]) => (
                     <div key={key} className="text-[11px]">
-                        <div className="font-medium text-gray-700 mb-0.5">
+                        <div className="font-medium mb-0.5">
                             {fieldLabels[key] || key}:
                         </div>
                         <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <span className="bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100">
+                            <span className="bg-destructive/10 text-destructive px-1.5 py-0.5 rounded border border-destructive/20 transition-colors">
                                 {formatValue(change.old)}
                             </span>
                             <ArrowRight className="h-2.5 w-2.5" />
-                            <span className="bg-green-50 text-green-600 px-1.5 py-0.5 rounded border border-green-100">
+                            <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20 transition-colors">
                                 {formatValue(change.new)}
                             </span>
                         </div>
@@ -117,13 +117,13 @@ const AssetDetailModal = ({ asset, onClose }: Props) => {
     const { data: logs } = useActivityLogs(asset.type === "perfil" ? "profile" : asset.type, asset.id);
 
     const statusColors: Record<string, string> = {
-        ativo: "bg-green-100 text-green-700",
-        disponivel: "bg-green-100 text-green-700",
-        analise: "bg-blue-100 text-blue-700",
-        em_analise: "bg-blue-100 text-blue-700",
-        bloqueado: "bg-red-100 text-red-700",
-        caiu: "bg-red-100 text-red-700",
-        restrita: "bg-orange-100 text-orange-700",
+        ativo: "bg-green-500/10 text-green-500 border-green-500/20",
+        disponivel: "bg-green-500/10 text-green-500 border-green-500/20",
+        analise: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+        em_analise: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+        bloqueado: "bg-red-500/10 text-red-500 border-red-500/20",
+        caiu: "bg-red-500/10 text-red-500 border-red-500/20",
+        restrita: "bg-orange-500/10 text-orange-500 border-orange-500/20",
     };
 
     const getTypeIcon = () => {
@@ -143,7 +143,7 @@ const AssetDetailModal = ({ asset, onClose }: Props) => {
 
     return (
         <Dialog open onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-4xl text-gray-800 p-0 overflow-hidden">
+            <DialogContent className="sm:max-w-4xl p-0 overflow-hidden">
                 <div className="flex h-[80vh]">
                     {/* Left Column: Details */}
                     <div className="flex-1 border-r bg-muted/5 p-6 overflow-y-auto">
@@ -169,8 +169,8 @@ const AssetDetailModal = ({ asset, onClose }: Props) => {
                                     </div>
 
                                     <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
-                                            <ShieldCheck className="h-5 w-5 text-blue-500" />
+                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <ShieldCheck className="h-5 w-5 text-primary" />
                                         </div>
                                         <div>
                                             <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest leading-none mb-1">Status Geral</p>
@@ -182,8 +182,8 @@ const AssetDetailModal = ({ asset, onClose }: Props) => {
 
                                     {asset.type === "perfil" && (
                                         <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center">
-                                                <Mail className="h-5 w-5 text-gray-500" />
+                                            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                                                <Mail className="h-5 w-5 text-muted-foreground" />
                                             </div>
                                             <div>
                                                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest leading-none mb-1">Email de Login</p>
@@ -194,8 +194,8 @@ const AssetDetailModal = ({ asset, onClose }: Props) => {
 
                                     {asset.type === "bm" && (
                                         <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center">
-                                                <LayoutGrid className="h-5 w-5 text-gray-500" />
+                                            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                                                <LayoutGrid className="h-5 w-5 text-muted-foreground" />
                                             </div>
                                             <div>
                                                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest leading-none mb-1">ID Facebook</p>
@@ -206,8 +206,8 @@ const AssetDetailModal = ({ asset, onClose }: Props) => {
 
                                     {asset.type === "conta" && (
                                         <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center">
-                                                <Building2 className="h-5 w-5 text-gray-500" />
+                                            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                                                <Building2 className="h-5 w-5 text-muted-foreground" />
                                             </div>
                                             <div>
                                                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest leading-none mb-1">BM Vinculada</p>
@@ -229,7 +229,7 @@ const AssetDetailModal = ({ asset, onClose }: Props) => {
                                             </p>
                                         </div>
                                         {asset.status === "bloqueado" && (
-                                            <div className="bg-red-50/50 p-3 rounded-xl border border-red-100 shadow-sm">
+                                            <div className="bg-destructive/5 p-3 rounded-xl border border-destructive/10 shadow-sm">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <Ban className="h-3.5 w-3.5 text-red-500" />
                                                     <p className="text-[9px] text-red-500 uppercase font-bold tracking-widest">Bloqueado em</p>
@@ -276,7 +276,7 @@ const AssetDetailModal = ({ asset, onClose }: Props) => {
                                                     </div>
                                                     <p className="text-sm font-semibold">{(link.bm as any)?.name}</p>
                                                 </div>
-                                                <Badge variant="outline" className="capitalize text-[10px] font-bold px-1.5 py-0 h-5 text-gray-600 bg-gray-50">
+                                                <Badge variant="outline" className="capitalize text-[10px] font-bold px-1.5 py-0 h-5">
                                                     {link.role_in_bm || "anunciante"}
                                                 </Badge>
                                             </div>
@@ -290,7 +290,7 @@ const AssetDetailModal = ({ asset, onClose }: Props) => {
                             {/* Metadata */}
                             <div className="pt-4 border-t border-muted">
                                 <p className="text-[10px] text-muted-foreground flex flex-col gap-1">
-                                    <span>Criado por <span className="font-semibold text-foreground text-gray-800">{asset.originalData.creator?.name || "Sistema"}</span></span>
+                                    <span>Criado por <span className="font-semibold text-foreground">{asset.originalData.creator?.name || "Sistema"}</span></span>
                                     <span>Em {format(new Date(asset.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
                                 </p>
                             </div>
@@ -312,7 +312,7 @@ const AssetDetailModal = ({ asset, onClose }: Props) => {
                                         <div className="absolute left-[-5px] top-1 h-3 w-3 rounded-full bg-primary ring-4 ring-background z-10" />
                                         <div className="bg-muted/30 p-4 rounded-xl border border-transparent hover:border-muted/20 transition-all shadow-sm">
                                             <div className="flex items-center justify-between mb-2">
-                                                <p className="text-xs font-bold text-foreground text-gray-800">{log.user_name || "Sistema"}</p>
+                                                <p className="text-xs font-bold text-foreground">{log.user_name || "Sistema"}</p>
                                                 <p className="text-[10px] font-medium text-muted-foreground">
                                                     {format(new Date(log.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                                                 </p>

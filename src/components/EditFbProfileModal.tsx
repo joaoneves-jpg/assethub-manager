@@ -83,7 +83,7 @@ const EditFbProfileModal = ({ profile, onClose }: Props) => {
 
     return (
         <Dialog open onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-lg text-gray-800 max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Editar Perfil</DialogTitle>
                 </DialogHeader>
@@ -140,7 +140,7 @@ const EditFbProfileModal = ({ profile, onClose }: Props) => {
                         </div>
 
                         {bmLinks.map((link, index) => (
-                            <div key={index} className="flex gap-2 items-end bg-gray-50 p-3 rounded-lg border">
+                            <div key={index} className="flex gap-2 items-end bg-muted/40 p-3 rounded-lg border">
                                 <div className="flex-1 space-y-1">
                                     <Label className="text-xs">Business Manager</Label>
                                     <Select value={link.bm_id} onValueChange={(v) => updateBmLink(index, "bm_id", v)}>

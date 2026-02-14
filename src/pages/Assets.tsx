@@ -55,6 +55,7 @@ import {
 import BulkEditAssetsModal from "@/components/BulkEditAssetsModal";
 import { useDeleteProfiles, useDeleteBms, useDeleteAdAccounts } from "@/hooks/useData";
 import { Checkbox } from "@/components/ui/checkbox";
+import TimelineDrawer from "@/components/TimelineDrawer";
 
 // Asset type mapping
 type AssetType = "perfil" | "bm" | "conta";
@@ -93,6 +94,7 @@ const Assets = () => {
 
     // Detail states
     const [selectedAsset, setSelectedAsset] = useState<UnifiedAsset | null>(null);
+    const [timelineEntity, setTimelineEntity] = useState<{ type: string; id: string; name: string } | null>(null);
 
     // Unified List Transformation
     const unifiedAssets = useMemo(() => {
@@ -122,7 +124,7 @@ const Assets = () => {
             id: a.id,
             name: a.name,
             type: "conta",
-            status: a.status || "ativo",
+            status: (a as any).status || "ativo",
             details: (a as any).bm?.name || "Sem BM",
             originalData: a,
             created_at: a.created_at
@@ -508,7 +510,7 @@ const Assets = () => {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="w-40">
                                                     <DropdownMenuItem onClick={() => setSelectedAsset(asset)}>Visualizar</DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => setShowHistory({ id: asset.id, type: asset.type === "perfil" ? "profile" : asset.type, name: asset.name })}>
+                                                    <DropdownMenuItem onClick={() => setTimelineEntity({ id: asset.id, type: asset.type === "perfil" ? "profile" : asset.type, name: asset.name })}>
                                                         <History className="h-4 w-4 mr-2" /> Histórico
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
@@ -524,9 +526,18 @@ const Assets = () => {
 
             {/* Modals */}
 
+            {timelineEntity && (
+                <TimelineDrawer
+                    entityType={timelineEntity.type}
+                    entityId={timelineEntity.id}
+                    entityName={timelineEntity.name}
+                    onClose={() => setTimelineEntity(null)}
+                />
+            )}
+
             {/* Creation Modal */}
             <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-                <DialogContent className="sm:max-w-md text-gray-800">
+                <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             {getTypeIcon(createType)}
@@ -620,7 +631,7 @@ const Assets = () => {
             <AlertDialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="text-gray-800">Confirmar exclusão em massa</AlertDialogTitle>
+                        <AlertDialogTitle>Confirmar exclusão em massa</AlertDialogTitle>
                         <AlertDialogDescription>
                             Tem certeza que deseja excluir os <strong>{selected.size}</strong> ativos selecionados?
                             Esta ação não pode ser desfeita e removerá permanentemente os registros.

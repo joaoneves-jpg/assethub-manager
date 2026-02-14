@@ -43,10 +43,10 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-    disponivel: "bg-green-100 text-green-700 border-green-200",
-    em_uso: "bg-blue-100 text-blue-700 border-blue-200",
-    caiu: "bg-red-100 text-red-700 border-red-200",
-    restrita: "bg-amber-100 text-amber-700 border-amber-200",
+    disponivel: "bg-green-500/10 text-green-500 border-green-500/20",
+    em_uso: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+    caiu: "bg-red-500/10 text-red-500 border-red-500/20",
+    restrita: "bg-orange-500/10 text-orange-500 border-orange-500/20",
 };
 
 const formatValue = (value: any): string => {
@@ -71,7 +71,7 @@ const formatLogChanges = (changes: any, actionType: string): React.ReactNode => 
             <div className="mt-1.5 space-y-0.5">
                 {relevantChanges.map(([key, value]) => (
                     <div key={key} className="text-[11px] text-muted-foreground">
-                        <span className="font-medium text-gray-600">{fieldLabels[key] || key}:</span>{" "}
+                        <span className="font-medium text-foreground/70">{fieldLabels[key] || key}:</span>{" "}
                         <span>{formatValue(value)}</span>
                     </div>
                 ))}
@@ -90,15 +90,15 @@ const formatLogChanges = (changes: any, actionType: string): React.ReactNode => 
             <div className="mt-2 space-y-2">
                 {updates.map(([key, change]: [string, any]) => (
                     <div key={key} className="text-[11px]">
-                        <div className="font-medium text-gray-700 mb-0.5">
+                        <div className="font-medium mb-0.5">
                             {fieldLabels[key] || key}:
                         </div>
                         <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <span className="bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100">
+                            <span className="bg-destructive/10 text-destructive px-1.5 py-0.5 rounded border border-destructive/20 transition-colors">
                                 {formatValue(change.old)}
                             </span>
                             <ArrowRight className="h-2.5 w-2.5" />
-                            <span className="bg-green-50 text-green-600 px-1.5 py-0.5 rounded border border-green-100">
+                            <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20 transition-colors">
                                 {formatValue(change.new)}
                             </span>
                         </div>
@@ -116,7 +116,7 @@ const PageDetailModal = ({ page, onClose }: Props) => {
 
     return (
         <Dialog open onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-2xl text-gray-800 max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Layout className="h-5 w-5 text-primary" />
@@ -164,37 +164,37 @@ const PageDetailModal = ({ page, onClose }: Props) => {
                             <div className="space-y-3">
                                 <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-widest pl-1">Informações de Uso</h3>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className="p-3 rounded-lg border bg-blue-50/20 space-y-1">
-                                        <div className="flex items-center gap-1.5 text-xs text-blue-700 font-semibold uppercase tracking-tight">
+                                    <div className="p-3 rounded-lg border bg-blue-500/5 space-y-1">
+                                        <div className="flex items-center gap-1.5 text-xs text-blue-500 font-semibold uppercase tracking-tight">
                                             <Building2 className="h-3 w-3" />
                                             BM em Uso
                                         </div>
                                         <p className="text-sm font-medium">{(page.current_bm as any)?.name || "—"}</p>
                                     </div>
-                                    <div className="p-3 rounded-lg border bg-purple-50/20 space-y-1">
-                                        <div className="flex items-center gap-1.5 text-xs text-purple-700 font-semibold uppercase tracking-tight">
+                                    <div className="p-3 rounded-lg border bg-purple-500/5 space-y-1">
+                                        <div className="flex items-center gap-1.5 text-xs text-purple-500 font-semibold uppercase tracking-tight">
                                             <CreditCard className="h-3 w-3" />
                                             Conta de Anúncio
                                         </div>
                                         <p className="text-sm font-medium">{(page.current_ad_account as any)?.name || "—"}</p>
                                     </div>
-                                    <div className="p-3 rounded-lg border bg-amber-50/20 space-y-1">
-                                        <div className="flex items-center gap-1.5 text-xs text-amber-700 font-semibold uppercase tracking-tight">
+                                    <div className="p-3 rounded-lg border bg-orange-500/5 space-y-1">
+                                        <div className="flex items-center gap-1.5 text-xs text-orange-500 font-semibold uppercase tracking-tight">
                                             <User className="h-3 w-3" />
                                             Perfil Vinculado
                                         </div>
                                         <p className="text-sm font-medium">{page.fb_profile?.name || "—"}</p>
                                     </div>
-                                    <div className="p-3 rounded-lg border bg-green-50/20 space-y-1">
-                                        <div className="flex items-center gap-1.5 text-xs text-green-700 font-semibold uppercase tracking-tight">
+                                    <div className="p-3 rounded-lg border bg-green-500/5 space-y-1">
+                                        <div className="flex items-center gap-1.5 text-xs text-green-500 font-semibold uppercase tracking-tight">
                                             <ShieldCheck className="h-3 w-3" />
                                             Gestor
                                         </div>
                                         <p className="text-sm font-medium">{(page.manager as any)?.name || "—"}</p>
                                     </div>
-                                    <div className="p-3 rounded-lg border bg-gray-50/30 col-span-2 space-y-1 flex items-center justify-between">
+                                    <div className="p-3 rounded-lg border bg-muted/30 col-span-2 space-y-1 flex items-center justify-between">
                                         <div className="space-y-1">
-                                            <div className="flex items-center gap-1.5 text-xs text-gray-600 font-semibold uppercase tracking-tight">
+                                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold uppercase tracking-tight">
                                                 <Calendar className="h-3 w-3" />
                                                 Data de Início de Uso
                                             </div>
@@ -216,7 +216,7 @@ const PageDetailModal = ({ page, onClose }: Props) => {
                                         </div>
                                         <div className="bg-muted/10 p-3 rounded-lg border border-transparent hover:border-muted-foreground/10 transition-colors">
                                             <p className="text-xs">
-                                                <span className="font-semibold text-gray-800">{log.user_name || "Sistema"}</span>{" "}
+                                                <span className="font-semibold">{log.user_name || "Sistema"}</span>{" "}
                                                 <span className="text-muted-foreground">
                                                     {log.action_type === "create" ? "criou a página" : log.action_type === "update" ? "alterou a página" : "excluiu a página"}
                                                 </span>

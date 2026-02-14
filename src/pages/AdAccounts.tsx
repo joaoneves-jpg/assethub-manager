@@ -13,8 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
 const statusColors: Record<string, string> = {
-  ativo: "bg-green-100 text-green-700",
-  bloqueado: "bg-red-100 text-red-700",
+  ativo: "bg-green-500/10 text-green-500 border-green-500/20",
+  bloqueado: "bg-red-500/10 text-red-500 border-red-500/20",
 };
 
 const AdAccountsPage = () => {
@@ -118,7 +118,7 @@ const AdAccountsPage = () => {
       )}
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="sm:max-w-md text-gray-800">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Nova Conta de Anúncio</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="space-y-2">
@@ -155,7 +155,7 @@ const AdAccountsPage = () => {
       </Dialog>
 
       <Dialog open={!!editingAccount} onOpenChange={(v) => !v && setEditingAccount(null)}>
-        <DialogContent className="sm:max-w-md text-gray-800">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Editar Conta de Anúncio</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="space-y-2">

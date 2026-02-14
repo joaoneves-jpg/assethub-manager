@@ -423,7 +423,7 @@ const Pages = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-gray-800">Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir a página <strong>{deleteConfirm?.name}</strong>?
               Esta ação não pode ser desfeita.
@@ -446,7 +446,7 @@ const Pages = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-gray-800">Confirmar exclusão em massa</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusão em massa</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir as <strong>{selected.size}</strong> páginas selecionadas?
               Esta ação não pode ser desfeita.

@@ -72,7 +72,7 @@ const formatChanges = (changes: any, actionType: string): React.ReactNode => {
     return (
       <div className="mt-2 space-y-1">
         {relevantChanges.map(([key, value]) => (
-          <div key={key} className="text-xs text-gray-700">
+          <div key={key} className="text-xs">
             <span className="font-medium">{fieldLabels[key] || key}:</span>{" "}
             <span className="text-muted-foreground">{formatValue(value)}</span>
           </div>
@@ -93,15 +93,15 @@ const formatChanges = (changes: any, actionType: string): React.ReactNode => {
       <div className="mt-2 space-y-2">
         {updates.map(([key, change]: [string, any]) => (
           <div key={key} className="text-xs">
-            <div className="font-medium text-gray-700 mb-1">
+            <div className="font-medium mb-1">
               {fieldLabels[key] || key}:
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
-              <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded">
+              <span className="bg-destructive/10 text-destructive px-2 py-0.5 rounded">
                 {formatValue(change.old)}
               </span>
               <ArrowRight className="h-3 w-3" />
-              <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded">
+              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded">
                 {formatValue(change.new)}
               </span>
             </div>
@@ -123,7 +123,7 @@ const formatChanges = (changes: any, actionType: string): React.ReactNode => {
     return (
       <div className="mt-2 space-y-1">
         {relevantChanges.map(([key, value]) => (
-          <div key={key} className="text-xs text-gray-700">
+          <div key={key} className="text-xs">
             <span className="font-medium">{fieldLabels[key] || key}:</span>{" "}
             <span className="text-muted-foreground">{formatValue(value)}</span>
           </div>
@@ -142,7 +142,7 @@ const TimelineDrawer = ({ entityType, entityId, entityName, onClose }: Props) =>
     <Sheet open onOpenChange={onClose}>
       <SheetContent className="w-[400px] sm:w-[440px]">
         <SheetHeader>
-          <SheetTitle className="text-left text-gray-800">Histórico: {entityName}</SheetTitle>
+          <SheetTitle className="text-left">Histórico: {entityName}</SheetTitle>
         </SheetHeader>
         <ScrollArea className="h-[calc(100vh-100px)] mt-4 pr-4">
           {isLoading ? (
@@ -160,7 +160,7 @@ const TimelineDrawer = ({ entityType, entityId, entityName, onClose }: Props) =>
                     <div className="w-px flex-1 bg-border mt-1" />
                   </div>
                   <div className="pb-4 flex-1">
-                    <p className="text-sm font-medium text-gray-800">
+                    <p className="text-sm font-medium">
                       {log.user_name || "Sistema"}{" "}
                       <span className="text-muted-foreground font-normal">
                         {log.action_type === "create" && "criou"}

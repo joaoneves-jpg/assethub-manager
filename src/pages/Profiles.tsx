@@ -201,7 +201,7 @@ const Profiles = () => {
 
       {/* Create modal */}
       <Dialog open={showCreate} onOpenChange={(v) => { setShowCreate(v); if (!v) resetForm(); }}>
-        <DialogContent className="sm:max-w-md text-gray-800 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Novo Perfil</DialogTitle>
           </DialogHeader>
@@ -253,7 +253,7 @@ const Profiles = () => {
               </div>
 
               {bmLinks.map((link, index) => (
-                <div key={index} className="flex gap-2 items-end bg-gray-50 p-2 rounded-md border text-xs">
+                <div key={index} className="flex gap-2 items-end bg-muted/40 p-2 rounded-md border text-xs">
                   <div className="flex-1 space-y-1">
                     <Select value={link.bm_id} onValueChange={(v) => updateBmLink(index, "bm_id", v)}>
                       <SelectTrigger className="h-8 py-0"><SelectValue placeholder="BM..." /></SelectTrigger>

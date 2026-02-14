@@ -24,7 +24,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
   const { user, signOut } = useAuth();
 
   return (
-    <div className="flex h-screen dark">
+    <div className="flex h-screen">
       {/* Sidebar */}
       <aside className="w-60 bg-sidebar border-r border-sidebar-border flex flex-col shrink-0">
         <div className="flex items-center gap-2.5 px-5 h-14 border-b border-sidebar-border">

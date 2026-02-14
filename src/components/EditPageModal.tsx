@@ -63,7 +63,7 @@ const EditPageModal = ({ page, onClose }: Props) => {
 
     return (
         <Dialog open onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-lg text-gray-800 max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Editar Página</DialogTitle>
                 </DialogHeader>

@@ -87,13 +87,13 @@ const BmsPage = () => {
                       {(bm as any).pages_origin?.map((p: any) => (
                         <div key={p.id} className="flex items-center justify-between text-xs p-1.5 bg-muted/30 rounded border border-muted/50">
                           <span className="truncate flex-1">{p.name}</span>
-                          <Badge className="ml-2 bg-blue-100 text-blue-700 hover:bg-blue-100 text-[9px] h-4 px-1">BM Matriz</Badge>
+                          <Badge className="ml-2 variant-secondary bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 text-[9px] h-4 px-1">BM Matriz</Badge>
                         </div>
                       ))}
                       {(bm as any).pages_current?.map((p: any) => (
                         <div key={p.id} className="flex items-center justify-between text-xs p-1.5 bg-muted/30 rounded border border-muted/50">
                           <span className="truncate flex-1">{p.name}</span>
-                          <Badge className="ml-2 bg-purple-100 text-purple-700 hover:bg-purple-100 text-[9px] h-4 px-1">BM em Uso</Badge>
+                          <Badge className="ml-2 bg-secondary text-secondary-foreground text-[9px] h-4 px-1">BM em Uso</Badge>
                         </div>
                       ))}
                       {(!((bm as any).pages_origin?.length > 0) && !((bm as any).pages_current?.length > 0)) && (
@@ -109,7 +109,7 @@ const BmsPage = () => {
       )}
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="sm:max-w-md text-gray-800">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Nova Business Manager</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="space-y-2">

@@ -80,7 +80,7 @@ const BulkEditAssetsModal = ({ selectedAssets, onClose }: Props) => {
 
     return (
         <Dialog open onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md text-gray-800">
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         Editar {selectedAssets.length} Ativos
