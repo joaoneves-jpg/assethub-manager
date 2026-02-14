@@ -9,15 +9,14 @@ import {
   CreditCard,
   LogOut,
   LayoutDashboard,
+  LayoutGrid
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/pages", label: "Páginas", icon: FileText },
-  { href: "/profiles", label: "Perfis", icon: Users },
-  { href: "/bms", label: "BMs", icon: Building2 },
-  { href: "/ad-accounts", label: "Contas", icon: CreditCard },
+  { href: "/assets", label: "Ativos", icon: LayoutGrid },
 ];
 
 const DashboardLayout = ({ children }: { children: ReactNode }) => {

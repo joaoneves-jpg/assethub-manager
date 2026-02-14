@@ -27,14 +27,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Trash2, Edit, Filter, MoreVertical } from "lucide-react";
+import {
+  Plus, Search, Trash2, Edit, Filter, MoreVertical,
+  CheckCircle2, History, XCircle, AlertCircle, Building2, User
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
 import CreatePageModal from "@/components/CreatePageModal";
 import EditPageModal from "@/components/EditPageModal";
 import BulkEditModal from "@/components/BulkEditModal";
 import TimelineDrawer from "@/components/TimelineDrawer";
 import PageDetailModal from "@/components/PageDetailModal";
-import { motion } from "framer-motion";
+import { FacetedFilter } from "@/components/FacetedFilter";
 import type { Page } from "@/hooks/useData";
 
 const statusMap: Record<string, { label: string; className: string }> = {
@@ -90,6 +94,52 @@ const Pages = () => {
     }
   };
 
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Calculate counts for filters
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    pages?.forEach(p => {
+      counts[p.status] = (counts[p.status] || 0) + 1;
+    });
+    return counts;
+  }, [pages]);
+
+  const bmCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    pages?.forEach(p => {
+      if (p.origin_bm_id) {
+        counts[p.origin_bm_id] = (counts[p.origin_bm_id] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [pages]);
+
+  const managerCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    pages?.forEach(p => {
+      if (p.current_manager_id) {
+        counts[p.current_manager_id] = (counts[p.current_manager_id] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [pages]);
+
+  const statusOptions = [
+    { label: "Disponível", value: "disponivel", icon: CheckCircle2 },
+    { label: "Em Uso", value: "em_uso", icon: History },
+    { label: "Caiu", value: "caiu", icon: XCircle },
+    { label: "Restrita", value: "restrita", icon: AlertCircle },
+  ];
+
+  const bmOptions = useMemo(() => {
+    return bms?.map(bm => ({
+      label: bm.name,
+      value: bm.id,
+      icon: Building2
+    })) || [];
+  }, [bms]);
+
   const handleDelete = async () => {
     try {
       await deletePages.mutateAsync(Array.from(selected));
@@ -128,73 +178,105 @@ const Pages = () => {
         </Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar página..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
-            <Filter className="h-3.5 w-3.5 mr-2" />
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os status</SelectItem>
-            <SelectItem value="disponivel">Disponível</SelectItem>
-            <SelectItem value="em_uso">Em Uso</SelectItem>
-            <SelectItem value="caiu">Caiu</SelectItem>
-            <SelectItem value="restrita">Restrita</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={bmFilter} onValueChange={setBmFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="BM Matriz" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as BMs</SelectItem>
-            {bms?.map((bm) => (
-              <SelectItem key={bm.id} value={bm.id}>{bm.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={managerFilter} onValueChange={setManagerFilter}>
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="Gestor" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="mine">Minhas Páginas</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <div className="flex flex-col gap-4">
+        {/* Top bar with Search, Filter toggle and Bulk Actions */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar página..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
 
-      {/* Bulk action bar */}
-      {selected.size > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20"
-        >
-          <span className="text-sm font-medium">{selected.size} selecionada(s)</span>
-          <Button size="sm" variant="outline" onClick={() => setShowBulkEdit(true)}>
-            <Edit className="h-3.5 w-3.5 mr-1" />
-            Editar
-          </Button>
-          <Button size="sm" variant="destructive" onClick={() => setBulkDeleteConfirm(true)}>
-            <Trash2 className="h-3.5 w-3.5 mr-1" />
-            Excluir
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
-            Limpar
-          </Button>
-        </motion.div>
-      )}
+          <div className="flex items-center gap-2">
+            <Button
+              variant={showFilters ? "secondary" : "outline"}
+              size="sm"
+              className="h-9 gap-2"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="h-4 w-4" />
+              Filtros
+              {(statusFilter !== "all" || bmFilter !== "all" || managerFilter !== "all") && (
+                <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 justify-center rounded-full text-[10px]">
+                  {[statusFilter, bmFilter, managerFilter].filter(f => f !== "all").length}
+                </Badge>
+              )}
+            </Button>
+
+            <AnimatePresence>
+              {selected.size > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="flex items-center gap-2 pl-2 border-l"
+                >
+                  <Button size="sm" variant="secondary" className="h-9 gap-2" onClick={() => setShowBulkEdit(true)}>
+                    <Edit className="h-3.5 w-3.5" />
+                    Editar ({selected.size})
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-9 text-destructive hover:text-destructive gap-2" onClick={() => setBulkDeleteConfirm(true)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Excluir
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-9 text-muted-foreground" onClick={() => setSelected(new Set())}>
+                    Limpar
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Expandable filters */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="flex flex-wrap gap-3 pb-2 pt-1">
+                <FacetedFilter
+                  title="Status"
+                  options={statusOptions}
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  counts={statusCounts}
+                />
+                <FacetedFilter
+                  title="BM Matriz"
+                  options={bmOptions}
+                  value={bmFilter}
+                  onChange={setBmFilter}
+                  counts={bmCounts}
+                />
+                <FacetedFilter
+                  title="Gestor"
+                  options={[
+                    { label: "Minhas Páginas", value: "mine", icon: User },
+                  ]}
+                  value={managerFilter}
+                  onChange={setManagerFilter}
+                  counts={managerCounts}
+                />
+                <Button variant="ghost" size="sm" onClick={() => {
+                  setStatusFilter("all");
+                  setBmFilter("all");
+                  setManagerFilter("all");
+                }} className="h-9 text-xs">
+                  Redefinir Filtros
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Table */}
       <div className="rounded-lg border bg-card overflow-hidden">

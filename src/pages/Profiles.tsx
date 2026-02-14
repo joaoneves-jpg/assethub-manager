@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { differenceInDays } from "date-fns";
 import { motion } from "framer-motion";
 import EditFbProfileModal from "@/components/EditFbProfileModal";
-import ProfileDetailModal from "@/components/ProfileDetailModal";
+import AssetDetailModal from "@/components/AssetDetailModal";
 import type { FbProfile } from "@/hooks/useData";
 
 const statusConfig: Record<string, { label: string; dotClass: string }> = {
@@ -288,8 +288,16 @@ const Profiles = () => {
       </Dialog>
 
       {selectedProfile && (
-        <ProfileDetailModal
-          profile={selectedProfile}
+        <AssetDetailModal
+          asset={{
+            id: selectedProfile.id,
+            name: selectedProfile.name,
+            type: "perfil",
+            status: selectedProfile.status,
+            details: selectedProfile.email_login || "—",
+            originalData: selectedProfile,
+            created_at: selectedProfile.created_at
+          }}
           onClose={() => setSelectedProfile(null)}
         />
       )}

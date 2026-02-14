@@ -347,3 +347,96 @@ export const useUpdateProfile = () => {
     },
   });
 };
+
+export const useBulkUpdateProfiles = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, updates }: { ids: string[]; updates: Partial<FbProfile> }) => {
+      const { error } = await supabase
+        .from("facebook_profiles")
+        .update(updates as any)
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["facebook_profiles"] });
+      qc.invalidateQueries({ queryKey: ["activity_logs"] });
+    },
+  });
+};
+
+export const useDeleteProfiles = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("facebook_profiles").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["facebook_profiles"] });
+      qc.invalidateQueries({ queryKey: ["activity_logs"] });
+    },
+  });
+};
+
+export const useBulkUpdateBms = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, updates }: { ids: string[]; updates: any }) => {
+      const { error } = await supabase
+        .from("bms")
+        .update(updates)
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bms"] });
+      qc.invalidateQueries({ queryKey: ["activity_logs"] });
+    },
+  });
+};
+
+export const useDeleteBms = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("bms").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bms"] });
+      qc.invalidateQueries({ queryKey: ["activity_logs"] });
+    },
+  });
+};
+
+export const useBulkUpdateAdAccounts = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, updates }: { ids: string[]; updates: any }) => {
+      const { error } = await supabase
+        .from("ad_accounts")
+        .update(updates)
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ad_accounts"] });
+      qc.invalidateQueries({ queryKey: ["activity_logs"] });
+    },
+  });
+};
+
+export const useDeleteAdAccounts = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("ad_accounts").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ad_accounts"] });
+      qc.invalidateQueries({ queryKey: ["activity_logs"] });
+    },
+  });
+};

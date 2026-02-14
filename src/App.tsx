@@ -8,9 +8,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import Auth from "./pages/Auth";
 import Index from "./pages/Index";
 import Pages from "./pages/Pages";
-import Profiles from "./pages/Profiles";
-import BmsPage from "./pages/Bms";
-import AdAccountsPage from "./pages/AdAccounts";
+import Assets from "./pages/Assets";
 import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
 
@@ -35,9 +33,7 @@ const AppRoutes = () => (
     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
     <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
     <Route path="/pages" element={<ProtectedRoute><Pages /></ProtectedRoute>} />
-    <Route path="/profiles" element={<ProtectedRoute><Profiles /></ProtectedRoute>} />
-    <Route path="/bms" element={<ProtectedRoute><BmsPage /></ProtectedRoute>} />
-    <Route path="/ad-accounts" element={<ProtectedRoute><AdAccountsPage /></ProtectedRoute>} />
+    <Route path="/assets" element={<ProtectedRoute><Assets /></ProtectedRoute>} />
     <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
