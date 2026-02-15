@@ -7,6 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import type { Page } from "@/hooks/useData";
 
 interface Props {
@@ -74,7 +80,7 @@ const EditPageModal = ({ page, onClose }: Props) => {
                     </div>
 
                     <div className="space-y-2">
-                        <Label>ID da Página <span className="text-destructive">*</span></Label>
+                        <Label>ID da Página</Label>
                         <Input value={fbPageId} onChange={(e) => setFbPageId(e.target.value)} placeholder="Ex: 1029384756" />
                     </div>
 
@@ -161,13 +167,34 @@ const EditPageModal = ({ page, onClose }: Props) => {
 
                             <div className="space-y-2">
                                 <Label>Data de Uso</Label>
-                                <Input type="date" value={usageDate} onChange={(e) => setUsageDate(e.target.value)} />
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                                "w-full justify-start text-left font-normal",
+                                                !usageDate && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {usageDate ? format(new Date(usageDate), "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={usageDate ? new Date(usageDate) : undefined}
+                                            onSelect={(date) => setUsageDate(date ? date.toISOString().split("T")[0] : "")}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                         </motion.div>
                     )}
 
                     <div className="flex gap-3 pt-2">
-                        <Button className="flex-1" onClick={handleSave} disabled={!name || !fbPageId || !originBm || updatePage.isPending}>
+                        <Button className="flex-1" onClick={handleSave} disabled={!name || !originBm || updatePage.isPending}>
                             {updatePage.isPending ? "Salvando..." : "Salvar Alterações"}
                         </Button>
                         <Button variant="outline" onClick={onClose}>

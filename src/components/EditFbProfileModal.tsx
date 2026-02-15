@@ -6,7 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Calendar as CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import type { FbProfile } from "@/hooks/useData";
 
 interface Props {
@@ -121,12 +126,56 @@ const EditFbProfileModal = ({ profile, onClose }: Props) => {
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
                             <Label>Data de Recebimento</Label>
-                            <Input type="date" value={dateReceived} onChange={(e) => setDateReceived(e.target.value)} />
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-full justify-start text-left font-normal h-9",
+                                            !dateReceived && "text-muted-foreground"
+                                        )}
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {dateReceived ? format(new Date(dateReceived), "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={dateReceived ? new Date(dateReceived) : undefined}
+                                        onSelect={(date) => setDateReceived(date ? date.toISOString().split('T')[0] : "")}
+                                        initialFocus
+                                        locale={ptBR}
+                                    />
+                                </PopoverContent>
+                            </Popover>
                         </div>
                         {status === "bloqueado" && (
                             <div className="space-y-2">
                                 <Label>Data de Bloqueio</Label>
-                                <Input type="date" value={dateBlocked} onChange={(e) => setDateBlocked(e.target.value)} />
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                                "w-full justify-start text-left font-normal h-9",
+                                                !dateBlocked && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {dateBlocked ? format(new Date(dateBlocked), "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={dateBlocked ? new Date(dateBlocked) : undefined}
+                                            onSelect={(date) => setDateBlocked(date ? date.toISOString().split('T')[0] : "")}
+                                            initialFocus
+                                            locale={ptBR}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                         )}
                     </div>

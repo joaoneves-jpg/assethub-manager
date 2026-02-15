@@ -9,7 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Layout, AlertCircle, Send } from "lucide-react";
+import { Plus, Trash2, Layout, AlertCircle, Send, Calendar as CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface Props {
   onClose: () => void;
@@ -28,6 +33,7 @@ const CreatePageModal = ({ onClose }: Props) => {
 
   const [inputList, setInputList] = useState("");
   const [stagedPages, setStagedPages] = useState<StagedPage[]>([]);
+  const [showAllStaged, setShowAllStaged] = useState(false);
 
   // Common Fields
   const [originBm, setOriginBm] = useState("");
@@ -163,26 +169,32 @@ const CreatePageModal = ({ onClose }: Props) => {
                   </Button>
                 </Label>
                 <div className="border rounded-lg overflow-hidden bg-muted/20">
-                  <ScrollArea className="max-h-[160px]">
-                    <div className="divide-y">
-                      {stagedPages.map((page) => (
-                        <motion.div
-                          key={page.id}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="flex items-center justify-between p-3 bg-card"
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium">{page.name}</span>
-                            <span className="text-[10px] text-muted-foreground font-mono">{page.fb_page_id || "Sem ID informado"}</span>
-                          </div>
-                          <Button variant="ghost" size="icon" onClick={() => removeStaged(page.id)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </ScrollArea>
+                  <div className="divide-y">
+                    {(showAllStaged ? stagedPages : stagedPages.slice(0, 3)).map((page) => (
+                      <motion.div
+                        key={page.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-center justify-between p-3 bg-card"
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">{page.name}</span>
+                          {page.fb_page_id && <span className="text-[10px] text-muted-foreground font-mono">{page.fb_page_id}</span>}
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => removeStaged(page.id)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </motion.div>
+                    ))}
+                    {!showAllStaged && stagedPages.length > 3 && (
+                      <button
+                        onClick={() => setShowAllStaged(true)}
+                        className="w-full py-2.5 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors border-t"
+                      >
+                        Ver todas as {stagedPages.length} páginas
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -275,7 +287,28 @@ const CreatePageModal = ({ onClose }: Props) => {
                   </div>
                   <div className="space-y-2 col-span-full">
                     <Label className="text-xs">Data de Uso</Label>
-                    <Input type="date" value={usageDate} onChange={(e) => setUsageDate(e.target.value)} className="h-8 text-xs" />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full h-8 text-xs justify-start text-left font-normal",
+                            !usageDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-3 w-3" />
+                          {usageDate ? format(new Date(usageDate), "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={usageDate ? new Date(usageDate) : undefined}
+                          onSelect={(date) => setUsageDate(date ? date.toISOString().split("T")[0] : "")}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </motion.div>
               )}

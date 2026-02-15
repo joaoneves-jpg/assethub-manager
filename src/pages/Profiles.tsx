@@ -6,12 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, User, Edit2, Building2, Trash2, Clock } from "lucide-react";
+import { Plus, Search, User, Edit2, Building2, Trash2, Clock, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { differenceInDays } from "date-fns";
 import { motion } from "framer-motion";
 import EditFbProfileModal from "@/components/EditFbProfileModal";
 import AssetDetailModal from "@/components/AssetDetailModal";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import type { FbProfile } from "@/hooks/useData";
 
 const statusConfig: Record<string, { label: string; dotClass: string }> = {
@@ -234,12 +239,56 @@ const Profiles = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Data de Recebimento</Label>
-                <Input type="date" value={newDateReceived} onChange={(e) => setNewDateReceived(e.target.value)} />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal h-9",
+                        !newDateReceived && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {newDateReceived ? format(new Date(newDateReceived), "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={newDateReceived ? new Date(newDateReceived) : undefined}
+                      onSelect={(date) => setNewDateReceived(date ? date.toISOString().split('T')[0] : "")}
+                      initialFocus
+                      locale={ptBR}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               {newStatus === "bloqueado" && (
                 <div className="space-y-2">
                   <Label>Data de Bloqueio</Label>
-                  <Input type="date" value={newDateBlocked} onChange={(e) => setNewDateBlocked(e.target.value)} />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal h-9",
+                          !newDateBlocked && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {newDateBlocked ? format(new Date(newDateBlocked), "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={newDateBlocked ? new Date(newDateBlocked) : undefined}
+                        onSelect={(date) => setNewDateBlocked(date ? date.toISOString().split('T')[0] : "")}
+                        initialFocus
+                        locale={ptBR}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               )}
             </div>

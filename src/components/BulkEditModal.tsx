@@ -6,6 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface Props {
   selectedIds: string[];
@@ -101,7 +107,29 @@ const BulkEditModal = ({ selectedIds, onClose }: Props) => {
           </div>
           <div className="space-y-2">
             <Label>Data de Uso</Label>
-            <Input type="date" value={usageDate} onChange={(e) => setUsageDate(e.target.value)} />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full justify-start text-left font-normal h-9",
+                    !usageDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {usageDate ? format(new Date(usageDate), "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={usageDate ? new Date(usageDate) : undefined}
+                  onSelect={(date) => setUsageDate(date ? date.toISOString().split('T')[0] : "")}
+                  initialFocus
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <Button className="w-full" onClick={handleSubmit} disabled={bulkUpdate.isPending}>
             {bulkUpdate.isPending ? "Atualizando..." : "Aplicar Alterações"}

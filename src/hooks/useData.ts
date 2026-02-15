@@ -123,11 +123,36 @@ export const useCreateBm = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (bm: { name: string; bm_id_facebook?: string }) => {
-      const { error } = await supabase.from("bms").insert({ ...bm, team_id: user!.teamId! } as any);
+    mutationFn: async (bms: { name: string; bm_id_facebook?: string } | { name: string; bm_id_facebook?: string }[]) => {
+      const bmsArray = Array.isArray(bms) ? bms : [bms];
+      const rows = bmsArray.map(bm => ({
+        ...bm,
+        team_id: user!.teamId!
+      }));
+      const { error } = await supabase.from("bms").insert(rows as any);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["bms"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bms"] });
+      qc.invalidateQueries({ queryKey: ["activity_logs"] });
+    },
+  });
+};
+
+export const useUpdateBm = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
+      const { error } = await supabase
+        .from("bms")
+        .update(updates)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bms"] });
+      qc.invalidateQueries({ queryKey: ["activity_logs"] });
+    },
   });
 };
 
@@ -163,11 +188,19 @@ export const useCreateAdAccount = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (acc: { name: string; bm_id?: string; status?: string }) => {
-      const { error } = await supabase.from("ad_accounts").insert({ ...acc, team_id: user!.teamId! } as any);
+    mutationFn: async (accs: { name: string; bm_id?: string; status?: string } | { name: string; bm_id?: string; status?: string }[]) => {
+      const accsArray = Array.isArray(accs) ? accs : [accs];
+      const rows = accsArray.map(acc => ({
+        ...acc,
+        team_id: user!.teamId!
+      }));
+      const { error } = await supabase.from("ad_accounts").insert(rows as any);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["ad_accounts"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ad_accounts"] });
+      qc.invalidateQueries({ queryKey: ["activity_logs"] });
+    },
   });
 };
 
@@ -223,36 +256,38 @@ export const useCreateFbProfile = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async ({
-      profile,
-      bmLinks,
-    }: {
+    mutationFn: async (items: {
       profile: Omit<FbProfile, "id" | "created_at" | "team_id" | "created_by">;
       bmLinks?: { bm_id: string; role_in_bm: string }[];
-    }) => {
-      const { data, error } = await supabase
-        .from("facebook_profiles")
-        .insert({
-          ...profile,
-          team_id: user!.teamId!,
-          created_by: user!.id,
-        } as any)
-        .select()
-        .single();
-      if (error) throw error;
+    } | {
+      profile: Omit<FbProfile, "id" | "created_at" | "team_id" | "created_by">;
+      bmLinks?: { bm_id: string; role_in_bm: string }[];
+    }[]) => {
+      const itemsArray = Array.isArray(items) ? items : [items];
 
-      if (bmLinks && bmLinks.length > 0) {
-        const { error: linkError } = await supabase.from("profile_bm_links").insert(
-          bmLinks.map((link) => ({
-            ...link,
-            profile_id: data.id,
-            status: "ativo", // Maintain default status in DB
-          }))
-        );
-        if (linkError) throw linkError;
+      for (const item of itemsArray) {
+        const { data, error } = await supabase
+          .from("facebook_profiles")
+          .insert({
+            ...item.profile,
+            team_id: user!.teamId!,
+            created_by: user!.id,
+          } as any)
+          .select()
+          .single();
+        if (error) throw error;
+
+        if (item.bmLinks && item.bmLinks.length > 0) {
+          const { error: linkError } = await supabase.from("profile_bm_links").insert(
+            item.bmLinks.map((link) => ({
+              ...link,
+              profile_id: data.id,
+              status: "ativo",
+            }))
+          );
+          if (linkError) throw linkError;
+        }
       }
-
-      return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["facebook_profiles"] });

@@ -28,24 +28,39 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage
+} from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Plus, Search, Trash2, Edit, Filter, MoreVertical,
-  CheckCircle2, History, XCircle, AlertCircle, Building2, User
+  CheckCircle2, History, XCircle, AlertCircle, Building2, User,
+  Copy, Layout, ExternalLink, ChevronRight, CreditCard
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { format, isToday, isYesterday } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import CreatePageModal from "@/components/CreatePageModal";
 import EditPageModal from "@/components/EditPageModal";
 import BulkEditModal from "@/components/BulkEditModal";
 import TimelineDrawer from "@/components/TimelineDrawer";
 import PageDetailModal from "@/components/PageDetailModal";
 import { FacetedFilter } from "@/components/FacetedFilter";
+import { cn } from "@/lib/utils";
 import type { Page } from "@/hooks/useData";
 
-const statusMap: Record<string, { label: string; className: string }> = {
-  disponivel: { label: "Disponível", className: "status-available" },
-  em_uso: { label: "Em Uso", className: "status-in-use" },
-  caiu: { label: "Caiu", className: "status-down" },
-  restrita: { label: "Restrita", className: "status-restricted" },
+const statusLabels: Record<string, string> = {
+  disponivel: "Disponível",
+  em_uso: "Em Uso",
+  caiu: "Caiu",
+  restrita: "Restrita",
 };
 
 const Pages = () => {
@@ -163,45 +178,62 @@ const Pages = () => {
     }
   };
 
+  const copyToClipboard = (e: React.MouseEvent, text: string) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copiado para a área de transferência" });
+  };
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return "—";
+    const date = new Date(dateStr);
+    if (isToday(date)) return "Hoje";
+    if (isYesterday(date)) return "Ontem";
+    return format(date, "dd/MM/yyyy");
+  };
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-8 space-y-10 bg-zinc-950 text-zinc-100 min-h-screen custom-scrollbar">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Páginas</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {pages?.length || 0} páginas no total
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">Páginas</h1>
+          <p className="text-zinc-500 text-sm">
+            Total de <span className="text-zinc-300 font-medium">{pages?.length || 0}</span> ativos de página registrados
           </p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
+        <Button onClick={() => setShowCreate(true)} className="bg-zinc-100 text-zinc-950 hover:bg-zinc-200">
           <Plus className="h-4 w-4 mr-2" />
           Nova Página
         </Button>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         {/* Top bar with Search, Filter toggle and Bulk Actions */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="relative flex-1 min-w-[300px] max-w-md group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 group-focus-within:text-zinc-300 transition-colors" />
             <Input
-              placeholder="Buscar página..."
+              placeholder="Buscar por nome ou ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9"
+              className="pl-10 h-10 bg-zinc-900/50 border-zinc-800 text-zinc-200 focus-visible:ring-zinc-700 focus-visible:border-zinc-700 transition-all"
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Button
               variant={showFilters ? "secondary" : "outline"}
               size="sm"
-              className="h-9 gap-2"
+              className={cn(
+                "h-10 px-4 gap-2 border-zinc-800",
+                showFilters ? "bg-zinc-800 text-zinc-100" : "bg-transparent text-zinc-400 font-medium hover:bg-zinc-900"
+              )}
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="h-4 w-4" />
               Filtros
               {(statusFilter !== "all" || bmFilter !== "all" || managerFilter !== "all") && (
-                <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 justify-center rounded-full text-[10px]">
+                <Badge className="ml-1 h-5 w-5 p-0 justify-center bg-zinc-100 text-zinc-950 rounded-full text-[10px] font-bold">
                   {[statusFilter, bmFilter, managerFilter].filter(f => f !== "all").length}
                 </Badge>
               )}
@@ -210,20 +242,21 @@ const Pages = () => {
             <AnimatePresence>
               {selected.size > 0 && (
                 <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  className="flex items-center gap-2 pl-2 border-l"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="flex items-center gap-2 p-1 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl"
                 >
-                  <Button size="sm" variant="secondary" className="h-9 gap-2" onClick={() => setShowBulkEdit(true)}>
+                  <Button size="sm" variant="ghost" className="h-8 gap-2 text-zinc-300 hover:bg-zinc-800" onClick={() => setShowBulkEdit(true)}>
                     <Edit className="h-3.5 w-3.5" />
                     Editar ({selected.size})
                   </Button>
-                  <Button size="sm" variant="ghost" className="h-9 text-destructive hover:text-destructive gap-2" onClick={() => setBulkDeleteConfirm(true)}>
+                  <Button size="sm" variant="ghost" className="h-8 text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-2" onClick={() => setBulkDeleteConfirm(true)}>
                     <Trash2 className="h-3.5 w-3.5" />
                     Excluir
                   </Button>
-                  <Button size="sm" variant="ghost" className="h-9 text-muted-foreground" onClick={() => setSelected(new Set())}>
+                  <div className="w-px h-4 bg-zinc-800 mx-1" />
+                  <Button size="sm" variant="ghost" className="h-8 text-zinc-500 hover:text-zinc-300" onClick={() => setSelected(new Set())}>
                     Limpar
                   </Button>
                 </motion.div>
@@ -279,114 +312,206 @@ const Pages = () => {
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border bg-card overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-10">
-                <Checkbox
-                  checked={filtered.length > 0 && selected.size === filtered.length}
-                  onCheckedChange={toggleAll}
-                />
-              </TableHead>
-              <TableHead>Nome</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>BM Matriz</TableHead>
-              <TableHead>BM em Uso</TableHead>
-              <TableHead>Conta</TableHead>
-              <TableHead>Perfil</TableHead>
-              <TableHead>Gestor</TableHead>
-              <TableHead>Data Uso</TableHead>
-              <TableHead className="w-10 text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
-                  Carregando...
-                </TableCell>
+      <TooltipProvider>
+        <div className="rounded-xl border border-zinc-800/50 bg-zinc-900/20 overflow-hidden shadow-2xl backdrop-blur-sm">
+          <Table>
+            <TableHeader className="bg-zinc-900/40">
+              <TableRow className="border-zinc-800 hover:bg-transparent">
+                <TableHead className="w-12 text-center">
+                  <Checkbox
+                    checked={filtered.length > 0 && selected.size === filtered.length}
+                    onCheckedChange={toggleAll}
+                    className="border-zinc-700 data-[state=checked]:bg-zinc-100 data-[state=checked]:text-zinc-950"
+                  />
+                </TableHead>
+                <TableHead className="text-xs uppercase font-semibold text-zinc-500 tracking-wider">Nome</TableHead>
+                <TableHead className="text-xs uppercase font-semibold text-zinc-500 tracking-wider">Status</TableHead>
+                <TableHead className="text-xs uppercase font-semibold text-zinc-500 tracking-wider">Business Managers</TableHead>
+                <TableHead className="text-xs uppercase font-semibold text-zinc-500 tracking-wider">Conta / Perfil</TableHead>
+                <TableHead className="text-xs uppercase font-semibold text-zinc-500 tracking-wider">Gestor</TableHead>
+                <TableHead className="text-xs uppercase font-semibold text-zinc-500 tracking-wider">Data Uso</TableHead>
+                <TableHead className="w-12 text-right"></TableHead>
               </TableRow>
-            ) : filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
-                  Nenhuma página encontrada
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((page) => {
-                const st = statusMap[page.status] || { label: page.status, className: "" };
-                return (
-                  <TableRow
-                    key={page.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => setSelectedPage(page)}
-                  >
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Checkbox
-                        checked={selected.has(page.id)}
-                        onCheckedChange={() => toggleSelect(page.id)}
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <div className="flex flex-col">
-                        <span>{page.name}</span>
-                        <span className="text-[10px] text-muted-foreground font-mono">{page.fb_page_id || "Sem ID"}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className={`status-dot ${st.className}`} />
-                        <span className="text-sm">{st.label}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {(page.origin_bm as any)?.name || "—"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {(page.current_bm as any)?.name || "—"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {(page.current_ad_account as any)?.name || "—"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {page.fb_profile?.name || "—"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {(page.manager as any)?.name || "—"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {page.usage_date || "—"}
-                    </TableCell>
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setEditPage(page)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => setDeleteConfirm({ id: page.id, name: page.name })}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-20 text-zinc-500">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="h-6 w-6 border-2 border-zinc-800 border-t-zinc-400 rounded-full animate-spin" />
+                      <span className="text-sm">Sincronizando registros...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-20 text-zinc-600">
+                    <div className="flex flex-col items-center gap-2">
+                      <Search className="h-8 w-8 opacity-20" />
+                      <p className="text-sm">Nenhuma página encontrada para esta filtragem.</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filtered.map((page) => {
+                  const bmMatriz = (page.origin_bm as any)?.name;
+                  const bmUso = (page.current_bm as any)?.name;
+                  const isPageUsingSameBM = bmMatriz === bmUso;
+
+                  const statusBadges: Record<string, string> = {
+                    em_uso: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+                    disponivel: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                    caiu: "bg-red-500/10 text-red-500 border-red-500/20",
+                    restrita: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+                  };
+
+                  return (
+                    <TableRow
+                      key={page.id}
+                      className="border-zinc-800/50 hover:bg-zinc-900/50 transition-colors group/row cursor-pointer"
+                      onClick={() => setSelectedPage(page)}
+                    >
+                      <TableCell onClick={(e) => e.stopPropagation()} className="py-4">
+                        <Checkbox
+                          checked={selected.has(page.id)}
+                          onCheckedChange={() => toggleSelect(page.id)}
+                          className="mx-auto block border-zinc-700 data-[state=checked]:bg-zinc-100 data-[state=checked]:text-zinc-950"
+                        />
+                      </TableCell>
+
+                      {/* Nome Column */}
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 shrink-0 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500">
+                            <Layout className="h-5 w-5" />
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-semibold text-zinc-100 truncate max-w-[200px]">{page.name}</span>
+                            <div className="flex items-center gap-1.5 group/id mt-0.5">
+                              {page.fb_page_id ? (
+                                <>
+                                  <span className="text-[10px] font-mono text-zinc-500 tabular-nums uppercase tracking-tight">{page.fb_page_id}</span>
+                                  <button
+                                    onClick={(e) => copyToClipboard(e, page.fb_page_id)}
+                                    className="opacity-0 group-hover/id:opacity-100 hover:text-zinc-300 transition-all"
+                                  >
+                                    <Copy className="h-2.5 w-2.5" />
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="text-[10px] font-bold text-amber-500/80 uppercase">Sem ID</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      {/* Status Column */}
+                      <TableCell>
+                        <Badge variant="outline" className={cn(
+                          "font-bold text-[10px] py-0 h-5 px-2 uppercase tracking-wide transition-all",
+                          statusBadges[page.status] || "bg-zinc-800 text-zinc-500 border-zinc-700"
+                        )}>
+                          {statusLabels[page.status] || page.status}
+                        </Badge>
+                      </TableCell>
+
+                      {/* BM Column */}
+                      <TableCell>
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <Building2 className="h-3 w-3 text-zinc-600 shrink-0" />
+                            <span className={cn("text-sm font-medium truncate max-w-[150px]", bmUso ? "text-zinc-300" : "text-zinc-700")}>
+                              {bmUso || "—"}
+                            </span>
+                          </div>
+                          {!isPageUsingSameBM && bmMatriz && (
+                            <span className="text-[10px] text-zinc-600 pl-4 font-medium italic">Matriz: {bmMatriz}</span>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* Account / Profile Column */}
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <CreditCard className="h-3 w-3 text-zinc-600 shrink-0" />
+                            <span className={cn("text-[11px] font-medium truncate max-w-[140px]", page.current_ad_account ? "text-zinc-300" : "text-zinc-700")}>
+                              {(page.current_ad_account as any)?.name || "Nenhuma Conta"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <User className="h-3 w-3 text-zinc-600 shrink-0" />
+                            <span className={cn("text-[11px] font-medium truncate max-w-[140px]", page.fb_profile ? "text-zinc-400" : "text-zinc-700")}>
+                              {page.fb_profile?.name || "—"}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      {/* Manager Column */}
+                      <TableCell>
+                        <div className="flex justify-start">
+                          {page.manager ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Avatar className="h-8 w-8 border border-zinc-800 ring-2 ring-transparent group-hover/row:ring-zinc-800 transition-all">
+                                  <AvatarImage src={(page.manager as any).avatar_url} />
+                                  <AvatarFallback className="bg-zinc-900 text-[10px] font-bold text-zinc-500">
+                                    {(page.manager as any).name?.substring(0, 2).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="bg-zinc-800 text-zinc-100 border-zinc-700">
+                                <p className="text-xs font-semibold">{(page.manager as any).name}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <div className="h-8 w-8 flex items-center justify-center opacity-20">—</div>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* Date Column */}
+                      <TableCell>
+                        <span className={cn(
+                          "text-sm font-medium font-mono tabular-nums tracking-tighter shrink-0",
+                          page.usage_date ? "text-zinc-400" : "text-zinc-700"
+                        )}>
+                          {formatDate(page.usage_date)}
+                        </span>
+                      </TableCell>
+
+                      <TableCell className="text-right py-4" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 text-zinc-300">
+                            <DropdownMenuItem onClick={() => setEditPage(page)} className="hover:bg-zinc-800 cursor-pointer">
+                              <Edit className="h-4 w-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-red-400 focus:text-red-400 hover:bg-red-500/10 cursor-pointer"
+                              onClick={() => setDeleteConfirm({ id: page.id, name: page.name })}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </TooltipProvider>
 
       {showCreate && <CreatePageModal onClose={() => setShowCreate(false)} />}
       {showBulkEdit && (
