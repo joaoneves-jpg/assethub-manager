@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tags, CheckCircle2, History, XCircle, AlertCircle } from "lucide-react";
 
 interface Props {
-    selectedAssets: { id: string; type: "perfil" | "bm" | "conta" }[];
+    selectedAssets: { id: string; type: "perfil" | "bm" | "conta" | "pagina" }[];
     onClose: () => void;
 }
 

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useCreatePage, useBms, useAdAccounts, useTeamMembers, useFbProfiles } from "@/hooks/useData";
+import { useCreatePage, useBms, useAdAccounts, useTeamMembers, useLogActivity } from "@/hooks/useData";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,7 @@ const CreatePageModal = ({ onClose }: Props) => {
   const createPage = useCreatePage();
   const { data: bms } = useBms();
   const { toast } = useToast();
+  const logActivity = useLogActivity();
 
   const [inputList, setInputList] = useState("");
   const [stagedPages, setStagedPages] = useState<StagedPage[]>([]);
@@ -43,12 +44,10 @@ const CreatePageModal = ({ onClose }: Props) => {
   const [currentAdAccount, setCurrentAdAccount] = useState("");
   const [currentBm, setCurrentBm] = useState("");
   const [currentManager, setCurrentManager] = useState("");
-  const [currentFbProfile, setCurrentFbProfile] = useState("");
   const [usageDate, setUsageDate] = useState(new Date().toISOString().split("T")[0]);
 
   const { data: accounts } = useAdAccounts();
   const { data: members } = useTeamMembers();
-  const { data: fbProfiles } = useFbProfiles();
 
   const handleInsert = () => {
     const lines = inputList.split("\n").map(l => l.trim()).filter(Boolean);
@@ -94,14 +93,45 @@ const CreatePageModal = ({ onClose }: Props) => {
         fb_page_id: page.fb_page_id || null,
         origin_bm_id: originBm || null,
         status,
-        current_ad_account_id: status === "em_uso" ? currentAdAccount || null : null,
-        current_bm_id: status === "em_uso" ? currentBm || null : null,
-        current_manager_id: status === "em_uso" ? currentManager || null : null,
-        current_fb_profile_id: status === "em_uso" ? currentFbProfile || null : null,
+        current_ad_account_id: status === "em_uso" && currentAdAccount !== "none" ? currentAdAccount || null : null,
+        current_bm_id: status === "em_uso" && currentBm !== "none" ? currentBm || null : null,
+        current_manager_id: status === "em_uso" && currentManager !== "none" ? currentManager || null : null,
         usage_date: status === "em_uso" ? usageDate || null : null,
       }));
 
       await createPage.mutateAsync(pagesToCreate as any);
+
+      // Log activity for BMs and Ad Account for each created page
+      for (const sp of stagedPages) {
+        if (originBm) {
+          await logActivity.mutateAsync({
+            entity_type: "bm",
+            entity_id: originBm,
+            action_type: "update",
+            changes: { info: { new: `Página "${sp.name}" registrada como Matriz` } }
+          });
+        }
+
+        if (status === "em_uso") {
+          if (currentBm) {
+            await logActivity.mutateAsync({
+              entity_type: "bm",
+              entity_id: currentBm,
+              action_type: "update",
+              changes: { info: { new: `Página "${sp.name}" vinculada para Uso` } }
+            });
+          }
+          if (currentAdAccount) {
+            await logActivity.mutateAsync({
+              entity_type: "ad_account",
+              entity_id: currentAdAccount,
+              action_type: "update",
+              changes: { info: { new: `Página "${sp.name}" vinculada para Uso` } }
+            });
+          }
+        }
+      }
+
       toast({ title: `${stagedPages.length} página(s) criada(s) com sucesso!` });
       onClose();
     } catch (error) {
@@ -228,7 +258,6 @@ const CreatePageModal = ({ onClose }: Props) => {
                     <SelectContent>
                       <SelectItem value="disponivel">Disponível</SelectItem>
                       <SelectItem value="em_uso">Em Uso</SelectItem>
-                      <SelectItem value="caiu">Caiu</SelectItem>
                       <SelectItem value="restrita">Restrita</SelectItem>
                     </SelectContent>
                   </Select>
@@ -274,17 +303,7 @@ const CreatePageModal = ({ onClose }: Props) => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Perfil</Label>
-                    <Select value={currentFbProfile} onValueChange={setCurrentFbProfile}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecionar perfil" /></SelectTrigger>
-                      <SelectContent>
-                        {fbProfiles?.map((p) => (
-                          <SelectItem key={p.id} value={p.id} className="text-xs">{p.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+
                   <div className="space-y-2 col-span-full">
                     <Label className="text-xs">Data de Uso</Label>
                     <Popover>

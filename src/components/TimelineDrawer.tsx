@@ -29,7 +29,9 @@ const fieldLabels: Record<string, string> = {
   origin_bm_id: "BM de Origem",
   url: "URL",
   fb_page_id: "ID da Página",
-  current_fb_profile_id: "Perfil",
+  manager_id: "Gestor Responsável",
+  creator_id: "Criado por",
+  bm_id_facebook: "ID Business Facebook",
 };
 
 // Mapeamento de valores de status para português
@@ -37,10 +39,8 @@ const statusLabels: Record<string, string> = {
   disponivel: "Disponível",
   em_uso: "Em Uso",
   caiu: "Caiu",
-  restrita: "Restrita",
-  ativo: "Ativo",
-  analise: "Em Análise",
   bloqueado: "Bloqueado",
+  restrita: "Bloqueado",
   administrador: "Administrador",
   anunciante: "Anunciante",
   rejeitado: "Rejeitado",

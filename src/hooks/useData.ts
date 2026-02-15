@@ -12,7 +12,6 @@ export type Page = {
   current_bm_id: string | null;
   current_ad_account_id: string | null;
   current_manager_id: string | null;
-  current_fb_profile_id: string | null;
   account_status: string | null;
   usage_date: string | null;
   created_at: string;
@@ -21,7 +20,6 @@ export type Page = {
   current_bm?: { name: string } | null;
   current_ad_account?: { name: string } | null;
   manager?: { name: string } | null;
-  fb_profile?: { name: string } | null;
 };
 
 export const usePages = () => {
@@ -36,7 +34,7 @@ export const usePages = () => {
           current_bm:bms!pages_current_bm_id_fkey(name),
           current_ad_account:ad_accounts!pages_current_ad_account_id_fkey(name),
           manager:profiles!pages_current_manager_id_fkey(name),
-          fb_profile:facebook_profiles!pages_current_fb_profile_id_fkey(name)
+          page_tags(tag_id, tags(id, name, color))
         `)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -50,9 +48,12 @@ export const useCreatePage = () => {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async (pages: { name: string; url?: string; origin_bm_id?: string; status?: string }[]) => {
+      if (!user?.teamId) {
+        throw new Error("Você precisa estar vinculado a um time para cadastrar páginas.");
+      }
       const rows = pages.map((p) => ({
         ...p,
-        team_id: user!.teamId!,
+        team_id: user.teamId,
       }));
       const { error } = await supabase.from("pages").insert(rows as any);
       if (error) throw error;
@@ -124,10 +125,13 @@ export const useCreateBm = () => {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async (bms: { name: string; bm_id_facebook?: string } | { name: string; bm_id_facebook?: string }[]) => {
+      if (!user?.teamId) {
+        throw new Error("Você precisa estar vinculado a um time para cadastrar BMs.");
+      }
       const bmsArray = Array.isArray(bms) ? bms : [bms];
       const rows = bmsArray.map(bm => ({
         ...bm,
-        team_id: user!.teamId!
+        team_id: user.teamId
       }));
       const { error } = await supabase.from("bms").insert(rows as any);
       if (error) throw error;
@@ -162,7 +166,11 @@ export const useAdAccounts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ad_accounts")
-        .select("*, bm:bms(name)")
+        .select(`
+          *,
+          bm:bms(name),
+          manager:profiles!ad_accounts_current_manager_id_fkey(name)
+        `)
         .order("name");
       if (error) throw error;
       return data;
@@ -189,10 +197,13 @@ export const useCreateAdAccount = () => {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async (accs: { name: string; bm_id?: string; status?: string } | { name: string; bm_id?: string; status?: string }[]) => {
+      if (!user?.teamId) {
+        throw new Error("Você precisa estar vinculado a um time para cadastrar contas de anúncios.");
+      }
       const accsArray = Array.isArray(accs) ? accs : [accs];
       const rows = accsArray.map(acc => ({
         ...acc,
-        team_id: user!.teamId!
+        team_id: user.teamId
       }));
       const { error } = await supabase.from("ad_accounts").insert(rows as any);
       if (error) throw error;
@@ -205,12 +216,93 @@ export const useCreateAdAccount = () => {
 };
 
 export const useTeamMembers = () => {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ["team_members"],
+    queryKey: ["team_members", user?.teamId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*").order("name");
+      if (!user?.teamId) return [];
+      // Use explicit join with alias for clarity
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*, roles:user_roles!user_roles_user_id_profiles_fkey(role)")
+        .eq("team_id", user.teamId)
+        .order("name");
+
       if (error) throw error;
       return data;
+    },
+    enabled: !!user?.teamId,
+  });
+};
+
+export const useAllUsers = () => {
+  return useQuery({
+    queryKey: ["all_users"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*, team:teams(name), roles:user_roles!user_roles_user_id_profiles_fkey(role)")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
+export const useTeams = () => {
+  return useQuery({
+    queryKey: ["teams"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("teams")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
+export const useAdminUpdateUserTeam = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, teamId }: { userId: string; teamId: string | null }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ team_id: teamId })
+        .eq("id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["all_users"] });
+      qc.invalidateQueries({ queryKey: ["team_members"] });
+    },
+  });
+};
+
+export const useAdminDeleteUser = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase.rpc("admin_delete_user" as any, { _target_user_id: userId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["all_users"] });
+      qc.invalidateQueries({ queryKey: ["team_members"] });
+    },
+  });
+};
+
+export const useRemoveMember = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase.rpc("remove_team_member" as any, { _target_user_id: userId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["team_members"] });
     },
   });
 };
@@ -265,13 +357,17 @@ export const useCreateFbProfile = () => {
     }[]) => {
       const itemsArray = Array.isArray(items) ? items : [items];
 
+      if (!user?.teamId) {
+        throw new Error("Você precisa estar vinculado a um time para cadastrar perfis.");
+      }
+
       for (const item of itemsArray) {
         const { data, error } = await supabase
           .from("facebook_profiles")
           .insert({
             ...item.profile,
-            team_id: user!.teamId!,
-            created_by: user!.id,
+            team_id: user.teamId,
+            created_by: user.id,
           } as any)
           .select()
           .single();
@@ -472,6 +568,195 @@ export const useDeleteAdAccounts = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["ad_accounts"] });
       qc.invalidateQueries({ queryKey: ["activity_logs"] });
+    },
+  });
+};
+export const useLogActivity = () => {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async ({
+      entity_type,
+      entity_id,
+      action_type,
+      changes,
+    }: {
+      entity_type: "profile" | "bm" | "ad_account" | "page";
+      entity_id: string;
+      action_type: "create" | "update" | "delete";
+      changes: any;
+    }) => {
+      const { error } = await supabase.from("activity_logs").insert({
+        entity_type,
+        entity_id,
+        action_type,
+        changes,
+        user_id: user?.id,
+        team_id: user?.teamId,
+        user_name: user?.name || "Sistema",
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ["activity_logs", variables.entity_type, variables.entity_id] });
+    },
+  });
+};
+
+export const useCreateGestor = () => {
+  return useMutation({
+    mutationFn: async ({ email, name }: { email: string; name: string }) => {
+      const { error } = await supabase.rpc("create_gestor_user" as any, { email, name });
+      if (error) throw error;
+    }
+  });
+};
+
+export const useCreateAuxiliar = () => {
+  return useMutation({
+    mutationFn: async ({ email, name }: { email: string; name: string }) => {
+      const { error } = await supabase.rpc("create_auxiliar_user" as any, { email, name });
+      if (error) throw error;
+    }
+  });
+};
+
+export const useCreateGestorTeam = () => {
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("create_gestor_team" as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      // Refresh user profile after team creation because teamId changes
+      // Actually AuthProvider handles state, we might need to refresh page or profile
+      window.location.reload();
+    }
+  });
+};
+
+export const useChangePassword = () => {
+  return useMutation({
+    mutationFn: async (password: string) => {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+    }
+  });
+};
+
+// Tags hooks
+export type Tag = {
+  id: string;
+  name: string;
+  color: string;
+  team_id: string;
+  created_at: string;
+  created_by: string | null;
+};
+
+export const useTags = () => {
+  return useQuery({
+    queryKey: ["tags"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tags")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data as Tag[];
+    },
+  });
+};
+
+export const useCreateTag = () => {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (tag: { name: string; color?: string }) => {
+      if (!user?.teamId) {
+        throw new Error("Você precisa estar vinculado a um time.");
+      }
+      const { data, error } = await supabase
+        .from("tags")
+        .insert({
+          name: tag.name,
+          color: tag.color || "#6366f1",
+          team_id: user.teamId,
+          created_by: user.id,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+};
+
+export const useUpdateTag = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Tag> }) => {
+      const { error } = await supabase
+        .from("tags")
+        .update(updates)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+};
+
+export const useDeleteTag = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("tags")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tags"] });
+      qc.invalidateQueries({ queryKey: ["pages"] });
+    },
+  });
+};
+
+export const useAddPageTag = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ pageId, tagId }: { pageId: string; tagId: string }) => {
+      const { error } = await supabase
+        .from("page_tags")
+        .insert({ page_id: pageId, tag_id: tagId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pages"] });
+    },
+  });
+};
+
+export const useRemovePageTag = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ pageId, tagId }: { pageId: string; tagId: string }) => {
+      const { error } = await supabase
+        .from("page_tags")
+        .delete()
+        .eq("page_id", pageId)
+        .eq("tag_id", tagId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pages"] });
     },
   });
 };

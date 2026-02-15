@@ -7,6 +7,7 @@ interface AuthUser {
   email: string;
   name: string;
   teamId: string | null;
+  teamName: string | null;
   role: string | null;
 }
 
@@ -36,7 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchProfile = async (authUser: User) => {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("*")
+      .select("*, team:teams(name)")
       .eq("id", authUser.id)
       .single();
 
@@ -50,6 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email: authUser.email || "",
       name: profile?.name || authUser.email || "",
       teamId: profile?.team_id || null,
+      teamName: (profile as any)?.team?.name || null,
       role: roles?.[0]?.role || null,
     });
   };

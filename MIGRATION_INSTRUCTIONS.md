@@ -1,55 +1,59 @@
 # Instruções para Aplicar as Migrações
 
-## Migração: Triggers de Histórico de Atividades
+## Passo 1: Executar as Migrações SQL no Supabase
 
-Esta migração adiciona triggers automáticos para registrar todas as alterações nas tabelas `pages` e `facebook_profiles` na tabela `activity_logs`.
+Você precisa executar 3 migrações SQL no dashboard do Supabase:
 
-### Como Aplicar
-
-Você tem duas opções para aplicar esta migração:
-
-#### Opção 1: Usando o Supabase Dashboard (Recomendado)
-
-1. Acesse o [Supabase Dashboard](https://supabase.com/dashboard)
-2. Selecione seu projeto
-3. Vá para **SQL Editor**
-4. Copie e cole o conteúdo do arquivo `supabase/migrations/20260214152100_add_activity_triggers.sql`
-5. Clique em **Run** para executar a migração
-
-#### Opção 2: Usando Supabase CLI
-
-Se você tem o Supabase CLI instalado e configurado:
-
-```bash
-cd /Users/jpbaladineves/Desktop/projetcs/assethub-manager
-supabase db push
-```
-
-### O que esta migração faz
-
-- **Cria função `log_page_changes()`**: Registra automaticamente todas as operações (INSERT, UPDATE, DELETE) na tabela `pages`
-- **Cria função `log_profile_changes()`**: Registra automaticamente todas as operações (INSERT, UPDATE, DELETE) na tabela `facebook_profiles`
-- **Cria triggers**: Ativa as funções acima sempre que houver mudanças nas tabelas
-
-### Benefícios
-
-Após aplicar esta migração:
-- ✅ Todas as alterações em páginas serão registradas automaticamente no histórico
-- ✅ Todas as alterações em perfis do Facebook serão registradas automaticamente no histórico
-- ✅ Você poderá ver quem fez cada alteração e quando
-- ✅ Você poderá ver exatamente o que foi alterado (valores antigos vs novos)
-
-### Verificação
-
-Após aplicar a migração, você pode verificar se os triggers foram criados executando:
-
+### 1. Adicionar current_manager_id para ad_accounts
 ```sql
-SELECT trigger_name, event_manipulation, event_object_table 
-FROM information_schema.triggers 
-WHERE trigger_schema = 'public' 
-  AND event_object_table IN ('pages', 'facebook_profiles');
+-- Arquivo: 20260215154300_add_manager_to_ad_accounts.sql
+ALTER TABLE ad_accounts
+ADD COLUMN current_manager_id UUID REFERENCES profiles(id) ON DELETE SET NULL;
+
+CREATE INDEX idx_ad_accounts_current_manager_id ON ad_accounts(current_manager_id);
+
+COMMENT ON COLUMN ad_accounts.current_manager_id IS 'The current manager responsible for this ad account';
 ```
 
-Você deve ver:
-- `on_page_change` para a tabela `pages`
-- `on_profile_change` para a tabela `facebook_profiles`
+### 2. Criar sistema de tags
+```sql
+-- Arquivo: 20260215154800_create_tags_system.sql
+-- (Veja o arquivo completo em supabase/migrations/)
+```
+
+## Passo 2: Regenerar os Tipos do Supabase
+
+Após executar as migrações:
+
+1. Acesse: https://supabase.com/dashboard/project/ynqhpnqyqzwvhqjqfnwp/settings/api
+2. Vá para "API Settings" → "Generate Types"
+3. Copie os tipos gerados
+4. Substitua o conteúdo de `src/integrations/supabase/types.ts`
+
+## Passo 3: Verificar Erros de Lint
+
+Após regenerar os tipos, os erros de lint em `useData.ts` devem desaparecer.
+
+## Como Executar as Migrações
+
+### Opção A: Supabase Dashboard (Recomendado)
+1. Acesse: https://supabase.com/dashboard/project/ynqhpnqyqzwvhqjqfnwp/editor
+2. Clique em "SQL Editor"
+3. Cole o conteúdo de cada arquivo de migração
+4. Execute cada um separadamente
+
+### Opção B: Supabase CLI (Se configurado)
+```bash
+npx supabase link --project-ref ynqhpnqyqzwvhqjqfnwp
+npx supabase db push
+```
+
+## Próximos Passos Após Migrações
+
+Depois de executar as migrações e regenerar os tipos, continuarei implementando:
+- Interface de tags com dropdown
+- Colunas específicas para páginas em /assets
+- Botão criar página
+- Edição de "recebido em"
+- Melhorias na edição em massa
+- Cópia de ID para perfis e BMs
